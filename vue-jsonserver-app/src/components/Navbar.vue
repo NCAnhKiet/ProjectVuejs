@@ -22,6 +22,24 @@
             </router-link>
           </li>
 
+          <li v-if="user" class="nav-item">
+            <router-link class="nav-link px-3 position-relative" to="/messages">
+              <i class="bi bi-chat-dots me-1"></i> Tin nhắn
+              <span v-if="unreadCount > 0" class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                {{ unreadCount }}
+              </span>
+            </router-link>
+          </li>
+
+          <li v-if="user" class="nav-item">
+            <router-link class="nav-link px-3 position-relative" to="/friends">
+              <i class="bi bi-people me-1"></i> Bạn bè
+              <span v-if="friendRequestsCount > 0" class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-warning text-dark badge-glow" style="font-size: 0.6rem;">
+                {{ friendRequestsCount }}
+              </span>
+            </router-link>
+          </li>
+
           <template v-if="!user">
             <li class="nav-item">
               <router-link class="nav-link px-3" to="/login">
@@ -52,7 +70,7 @@
                   <small class="text-muted">{{ user.email }}</small>
                 </li>
                 <li><hr class="dropdown-divider"></li>
-                <li>
+                 <li>
                   <router-link class="dropdown-item" to="/profile">
                     <i class="bi bi-person me-2"></i> Trang cá nhân
                   </router-link>
@@ -73,15 +91,18 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import messageService from '../services/messageService'
+import friendService from '../services/friendService'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
-
-const user = computed(() => {
-  const userData = localStorage.getItem('user')
-  return userData ? JSON.parse(userData) : null
-})
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+const unreadCount = computed(() => authStore.unreadMessagesCount)
+const friendRequestsCount = computed(() => authStore.friendRequestsCount)
 
 const userInitials = computed(() => {
   if (!user.value || !user.value.name) return 'U'
@@ -92,11 +113,56 @@ const userInitials = computed(() => {
   return user.value.name[0].toUpperCase()
 })
 
-const logout = () => {
-  if (confirm('Bạn có chắc muốn đăng xuất?')) {
-    localStorage.removeItem('user')
+let pollInterval
+
+const fetchNotifications = async () => {
+  if (user.value) {
+    try {
+      // Unread messages
+      const messages = await messageService.getAllMessages(user.value.id)
+      const mCount = messages.filter(m => m.receiverId === user.value.id && !m.isRead).length
+      authStore.setUnreadCount(mCount)
+
+      // Pending friend requests
+      const requests = await friendService.getPendingRequests(user.value.id)
+      authStore.setFriendRequestsCount(requests.length)
+    } catch (e) {
+      console.error('Failed to fetch counts', e)
+    }
+  }
+}
+
+onMounted(() => {
+  fetchNotifications()
+  pollInterval = setInterval(fetchNotifications, 5000) 
+})
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
+
+const logout = async () => {
+  const result = await Swal.fire({
+    title: 'Đăng xuất?',
+    text: "Bạn có chắc muốn đăng xuất?",
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Đăng xuất',
+    cancelButtonText: 'Hủy'
+  })
+
+  if (result.isConfirmed) {
+    authStore.logout()
     router.push('/login')
-    location.reload()
+    Swal.fire({
+      icon: 'success',
+      title: 'Thành công!',
+      text: 'Đã đăng xuất',
+      timer: 1500,
+      showConfirmButton: false
+    })
   }
 }
 </script>
@@ -127,5 +193,15 @@ const logout = () => {
 .dropdown-header {
   padding: 12px 16px;
   background: #f8f9fa;
+}
+.badge-glow {
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.8);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.2); }
+  100% { transform: translate(-50%, -50%) scale(1); }
 }
 </style>

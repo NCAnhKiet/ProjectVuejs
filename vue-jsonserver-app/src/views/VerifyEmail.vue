@@ -12,9 +12,7 @@
               Nhập mã đã gửi về email của bạn
             </p>
 
-            <div v-if="errorMessage" class="alert alert-danger">
-              {{ errorMessage }}
-            </div>
+
 
             <input 
               v-model="code"
@@ -39,11 +37,11 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
 const code = ref('')
-const errorMessage = ref('')
 
 const verify = async () => {
   try {
@@ -60,14 +58,20 @@ const verify = async () => {
         verifyCode: null
       })
 
-      alert('✅ Xác thực thành công!')
+      await Swal.fire({
+        icon: 'success',
+        title: 'Thành công!',
+        text: 'Xác thực email thành công! Bạn có thể đăng nhập ngay.',
+        timer: 2000,
+        showConfirmButton: false
+      })
       router.push('/login')
     } else {
-      errorMessage.value = '❌ Mã xác thực không đúng'
+      Swal.fire('Lỗi', 'Mã xác thực không đúng', 'error')
     }
   } catch (err) {
     console.error(err)
-    errorMessage.value = '❌ Lỗi server'
+    Swal.fire('Lỗi', 'Đã có lỗi xảy ra trên server', 'error')
   }
 }
 

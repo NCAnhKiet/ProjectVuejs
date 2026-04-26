@@ -10,32 +10,7 @@
           </button>
         </div>
 
-        <!-- Alert Message -->
-        <div 
-          v-if="errorMessage" 
-          class="alert alert-danger alert-dismissible fade show" 
-          role="alert"
-        >
-          {{ errorMessage }}
-          <button 
-            type="button" 
-            class="btn-close" 
-            @click="errorMessage = ''"
-          ></button>
-        </div>
 
-        <div 
-          v-if="successMessage" 
-          class="alert alert-success alert-dismissible fade show" 
-          role="alert"
-        >
-          {{ successMessage }}
-          <button 
-            type="button" 
-            class="btn-close" 
-            @click="successMessage = ''"
-          ></button>
-        </div>
 
         <!-- Form Card -->
         <div class="card shadow-sm">
@@ -74,17 +49,63 @@
               <!-- Content Textarea -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Nội dung</label>
-                <textarea 
-                  v-model="content" 
-                  class="form-control" 
-                  rows="10"
+                <QuillEditor
+                  v-model:content="content"
+                  contentType="html"
+                  theme="snow"
+                  style="height: 300px;"
                   placeholder="Viết nội dung bài viết của bạn..."
-                  style="resize: vertical;"
-                  required
-                ></textarea>
-                <div class="form-text">
-                  {{ wordCount }} từ • Khoảng {{ readingTime }} phút đọc
+                ></QuillEditor>
+                <div class="form-text mt-2">
+                  Khoảng {{ readingTime }} phút đọc
                 </div>
+              </div>
+
+              <!-- Tags Input -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Nhãn (Tags)</label>
+                <div class="input-group mb-2 position-relative">
+                  <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                  <input 
+                    v-model="tagInput"
+                    @keydown.enter.prevent="addTag"
+                    @keydown.comma.prevent="addTag"
+                    @input="showSuggestions = true"
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Nhập tag (nhấn Enter để thêm)..."
+                  >
+                  <button class="btn btn-outline-secondary" type="button" @click="addTag">Thêm</button>
+                  
+                  <!-- Suggestions Dropdown -->
+                  <div v-if="showSuggestions && filteredSuggestions.length > 0" class="tag-suggestions shadow-sm border rounded">
+                    <div 
+                      v-for="suggestion in filteredSuggestions" 
+                      :key="suggestion.name"
+                      class="suggestion-item p-2"
+                      @click="selectSuggestion(suggestion.name)"
+                    >
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary">#{{ suggestion.name }}</span>
+                        <div>
+                          <span v-if="suggestion.count > 5" class="badge bg-danger me-2" style="font-size: 0.6rem;">Phổ biến</span>
+                          <small class="text-muted">{{ suggestion.count }} bài viết</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <span 
+                    v-for="(tag, index) in tags" 
+                    :key="index"
+                    class="badge bg-primary d-flex align-items-center p-2"
+                  >
+                    #{{ tag }}
+                    <i class="bi bi-x-circle ms-2" style="cursor: pointer;" @click="removeTag(index)"></i>
+                  </span>
+                </div>
+                <div class="form-text">Tối đa 5 tags.</div>
               </div>
 
               <!-- Action Buttons -->
@@ -139,9 +160,8 @@
           {{ title || 'Chưa có tiêu đề' }}
         </h3>
 
-        <p class="mt-3" style="white-space: pre-wrap; line-height: 1.8;">
-          {{ content || 'Chưa có nội dung...' }}
-        </p>
+        <div class="mt-3 ql-editor px-0" style="line-height: 1.8;" v-html="content || 'Chưa có nội dung...'">
+        </div>
 
         <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
           <div class="avatar-sm">
@@ -168,18 +188,77 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../services/api'
 import { useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
+import { useAuthStore } from '../stores/auth'
 
 const title = ref('')
 const content = ref('')
 const isPublishing = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
 const router = useRouter()
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
 const image = ref('')
 const previewImage = ref(null)
+
+const tags = ref([])
+const tagInput = ref('')
+const existingTags = ref([]) // { name: string, count: number }
+const showSuggestions = ref(false)
+
+const fetchExistingTags = async () => {
+  try {
+    const res = await api.get('/posts')
+    const allPosts = res.data
+    const tagCounts = {}
+    
+    allPosts.forEach(post => {
+      if (post.tags) {
+        post.tags.forEach(tag => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        })
+      }
+    })
+    
+    existingTags.value = Object.entries(tagCounts).map(([name, count]) => ({
+      name,
+      count
+    })).sort((a, b) => b.count - a.count)
+  } catch (error) {
+    console.error('Lỗi khi tải tags:', error)
+  }
+}
+
+const filteredSuggestions = computed(() => {
+  const input = tagInput.value.trim().toLowerCase().replace(/^#/, '')
+  if (!input) return []
+  return existingTags.value.filter(t => 
+    t.name.toLowerCase().includes(input) && !tags.value.includes(t.name)
+  ).slice(0, 5)
+})
+
+const selectSuggestion = (tagName) => {
+  if (!tags.value.includes(tagName) && tags.value.length < 5) {
+    tags.value.push(tagName)
+  }
+  tagInput.value = ''
+  showSuggestions.value = false
+}
+
+const addTag = () => {
+  const val = tagInput.value.trim().replace(/^#/, '').replace(/,/g, '')
+  if (val && !tags.value.includes(val) && tags.value.length < 5) {
+    tags.value.push(val)
+  }
+  tagInput.value = ''
+  showSuggestions.value = false
+}
+
+const removeTag = (index) => {
+  tags.value.splice(index, 1)
+}
 
 const resizeImage = (file, max = 800) => {
   return new Promise(resolve => {
@@ -198,15 +277,13 @@ const resizeImage = (file, max = 800) => {
 }
 
 
-const user = JSON.parse(localStorage.getItem('user') || '{}')
-
 const userInitials = computed(() => {
-  if (!user.name) return 'U'
-  const names = user.name.split(' ')
+  if (!user.value || !user.value.name) return 'U'
+  const names = user.value.name.split(' ')
   if (names.length >= 2) {
     return (names[0][0] + names[names.length - 1][0]).toUpperCase()
   }
-  return user.name[0].toUpperCase()
+  return user.value.name[0].toUpperCase()
 })
 
 const handleImage = async (e) => {
@@ -214,7 +291,7 @@ const handleImage = async (e) => {
   if (!file) return
 
   if (file.size > 2 * 1024 * 1024) {
-    alert('Ảnh phải nhỏ hơn 2MB')
+    Swal.fire('Cảnh báo', 'Ảnh phải nhỏ hơn 2MB', 'warning')
     return
   }
 
@@ -228,7 +305,8 @@ const canPublish = computed(() => {
 })
 
 const wordCount = computed(() => {
-  return content.value.trim().split(/\s+/).filter(word => word.length > 0).length
+  const text = content.value.replace(/<[^>]*>?/gm, '').trim()
+  return text.split(/\s+/).filter(word => word.length > 0).length
 })
 
 const readingTime = computed(() => {
@@ -246,56 +324,65 @@ const formatDate = (date) => {
 }
 
 const addPost = async () => {
-  if (!user.id) {
-    errorMessage.value = '⚠️ Bạn cần đăng nhập để đăng bài!'
+  if (!user.value || !user.value.id) {
+    Swal.fire('Lỗi', 'Bạn cần đăng nhập để đăng bài!', 'error')
     return
   }
 
   if (!canPublish.value) {
-    errorMessage.value = '⚠️ Vui lòng nhập đầy đủ tiêu đề và nội dung!'
+    Swal.fire('Cảnh báo', 'Vui lòng nhập đầy đủ tiêu đề và nội dung!', 'warning')
     return
   }
 
   isPublishing.value = true
-  errorMessage.value = ''
 
   try {
     await api.post('/posts', {
       title: title.value,
       content: content.value,
-      author: user.name,
-      userId: user.id,
+      author: user.value.name,
+      userId: user.value.id,
       image: image.value,
+      tags: tags.value,
       createdAt: new Date().toISOString()
     })
 
     isPublishing.value = false
-    successMessage.value = '🎉 Đăng bài thành công!'
+    Swal.fire({
+      icon: 'success',
+      title: 'Thành công!',
+      text: 'Đăng bài thành công!',
+      timer: 1500,
+      showConfirmButton: false
+    })
 
     setTimeout(() => {
       router.push('/')
-    }, 1000)
+    }, 1500)
 
   } catch (error) {
     console.error(error)
-    errorMessage.value = '❌ Đăng bài thất bại!'
+    Swal.fire('Lỗi', 'Đăng bài thất bại!', 'error')
     isPublishing.value = false
   }
 }
-
 
 const saveDraft = () => {
   const draft = {
     title: title.value,
     content: content.value,
+    tags: tags.value,
     savedAt: new Date()
   }
   localStorage.setItem('draft', JSON.stringify(draft))
-  successMessage.value = '💾 Đã lưu nháp!'
-  
-  setTimeout(() => {
-    successMessage.value = ''
-  }, 3000)
+  Swal.fire({
+    icon: 'success',
+    title: 'Đã lưu nháp!',
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  })
 }
 
 // Load draft nếu có
@@ -305,10 +392,14 @@ const loadDraft = () => {
     const parsed = JSON.parse(draft)
     title.value = parsed.title || ''
     content.value = parsed.content || ''
+    tags.value = parsed.tags || []
   }
 }
 
-loadDraft()
+onMounted(() => {
+  loadDraft()
+  fetchExistingTags()
+})
 </script>
 
 <style scoped>
@@ -323,5 +414,25 @@ loadDraft()
   justify-content: center;
   font-weight: bold;
   font-size: 16px;
+}
+
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.suggestion-item:hover {
+  background: #f8f9fa;
 }
 </style>

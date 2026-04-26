@@ -16,8 +16,28 @@
                 {{ getInitials(post.author) }}
               </div>
               <div>
-                <div class="fw-semibold">
-                  <i class="bi bi-person me-1"></i>{{ post.author }}
+                <div class="fw-semibold d-flex align-items-center gap-2">
+                  <i class="bi bi-person me-1"></i>
+                  <router-link :to="`/user/${post.userId}`" class="text-dark text-decoration-none hover-primary">
+                    {{ post.author }}
+                  </router-link>
+                  <!-- Follow Button -->
+                  <button 
+                    v-if="user && post.userId && post.userId !== user.id"
+                    class="btn btn-sm rounded-pill px-3 py-0"
+                    :class="isFollowing(post.userId) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleFollow(post.userId)"
+                  >
+                    {{ isFollowing(post.userId) ? 'Đang Follow' : '+ Follow' }}
+                  </button>
+                  <!-- Message Button -->
+                  <router-link 
+                    v-if="user && post.userId && post.userId !== user.id"
+                    :to="`/messages?u=${post.userId}`" 
+                    class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
+                  >
+                    <i class="bi bi-chat-text"></i>
+                  </router-link>
                 </div>
                 <small class="text-muted">
                   <i class="bi bi-clock me-1"></i>{{ formatDate(post.createdAt) }}
@@ -36,17 +56,37 @@
   style="max-height: 450px; object-fit: cover;"
 />
 
-<p class="text-muted" style="white-space: pre-wrap; line-height: 1.8;">
-  {{ post.content }}
-</p>
+<div class="mt-3 ql-editor px-0" style="line-height: 1.8;" v-html="post.content || 'Đang tải nội dung...'">
+</div>
 
 
-            <!-- Post Stats -->
-            <div class="border-top pt-3 mt-4">
+            <!-- Post Stats & Social Actions -->
+            <div class="border-top pt-3 mt-4 d-flex justify-content-between align-items-center">
               <small class="text-muted">
                 <i class="bi bi-card-text me-1"></i>{{ wordCount }} từ • 
                 <i class="bi bi-hourglass-split me-1"></i>{{ readingTime }} phút đọc
               </small>
+
+              <div class="d-flex gap-3">
+                <!-- Like Button -->
+                <button 
+                  class="btn btn-sm d-flex align-items-center gap-1 border-0"
+                  :class="hasLiked ? 'text-danger' : 'text-muted'"
+                  @click="toggleLike"
+                >
+                  <i class="bi fs-5" :class="hasLiked ? 'bi-heart-fill' : 'bi-heart'"></i>
+                  <span class="fw-semibold">{{ post.likes?.length || 0 }}</span>
+                </button>
+
+                <!-- Share Button -->
+                <button 
+                  class="btn btn-sm text-muted d-flex align-items-center gap-1 border-0"
+                  @click="sharePost"
+                >
+                  <i class="bi bi-share fs-5"></i>
+                  <span>Chia sẻ</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -131,6 +171,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Social Share Modal -->
+  <ShareModal ref="shareModalRef" :postId="post.id" />
 </template>
 
 
@@ -138,17 +181,93 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
+import Swal from 'sweetalert2'
+import { useAuthStore } from '../stores/auth'
+import ShareModal from '../components/ShareModal.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+const shareModalRef = ref(null)
 const id = route.params.id
+
+const hasLiked = computed(() => {
+  if (!user.value || !post.value.likes) return false
+  return post.value.likes.includes(user.value.id)
+})
+
+const isFollowing = (authorId) => {
+  if (!user.value || !user.value.following) return false
+  return user.value.following.includes(authorId)
+}
+
+const toggleFollow = async (authorId) => {
+  if (!user.value) {
+    Swal.fire('Thông báo', 'Vui lòng đăng nhập để theo dõi!', 'info')
+    return
+  }
+
+  const following = user.value.following || []
+  const idx = following.indexOf(authorId)
+
+  if (idx > -1) {
+    following.splice(idx, 1)
+  } else {
+    following.push(authorId)
+  }
+
+  try {
+    await api.patch(`/users/${user.value.id}`, { following })
+    authStore.updateUser({ following })
+    Swal.fire({
+      icon: 'success',
+      title: idx > -1 ? 'Đã bỏ theo dõi' : 'Đã theo dõi',
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000
+    })
+  } catch (error) {
+    console.error('Lỗi khi follow:', error)
+  }
+}
+
+const toggleLike = async () => {
+  if (!user.value) {
+    Swal.fire('Thông báo', 'Vui lòng đăng nhập để thích bài viết!', 'info')
+    return
+  }
+
+  const likes = post.value.likes || []
+  const userIdx = likes.indexOf(user.value.id)
+
+  if (userIdx > -1) {
+    likes.splice(userIdx, 1)
+  } else {
+    likes.push(user.value.id)
+  }
+
+  try {
+    await api.patch(`/posts/${post.value.id}`, { likes })
+    post.value.likes = likes
+  } catch (error) {
+    console.error('Lỗi khi thả tim:', error)
+  }
+}
+
+const sharePost = () => {
+  if (!user.value) {
+    Swal.fire('Thông báo', 'Vui lòng đăng nhập để chia sẻ!', 'info')
+    return
+  }
+  shareModalRef.value.open()
+}
 
 const post = ref({})
 const comments = ref([])
 const comment = ref('')
 const isSending = ref(false)
-
-const user = JSON.parse(localStorage.getItem('user') || 'null')
 
 const userInitials = computed(() => {
   if (!user || !user.name) return 'U'
@@ -161,7 +280,8 @@ const userInitials = computed(() => {
 
 const wordCount = computed(() => {
   if (!post.value.content) return 0
-  return post.value.content.trim().split(/\s+/).filter(word => word.length > 0).length
+  const text = post.value.content.replace(/<[^>]*>?/gm, '').trim()
+  return text.split(/\s+/).filter(word => word.length > 0).length
 })
 
 const readingTime = computed(() => {
@@ -184,13 +304,19 @@ const formatDate = (date) => {
   const d = new Date(date)
   const now = new Date()
   const diff = now - d
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const minutes = Math.floor(diff / (1000 * 60))
   
-  if (minutes < 1) return 'Vừa xong'
-  if (minutes < 60) return `${minutes} phút trước`
-  if (hours < 24) return `${hours} giờ trước`
+  if (diff < 0 && diff > -60000) return 'Vừa xong'
+  
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  if (days === 0) {
+    if (minutes < 1) return 'Vừa xong'
+    if (minutes < 60) return `${minutes} phút trước`
+    return `${hours} giờ trước`
+  }
   if (days === 1) return 'Hôm qua'
   if (days < 7) return `${days} ngày trước`
   
@@ -214,14 +340,14 @@ const loadData = async () => {
 }
 
 const addComment = async () => {
-  if (!comment.value.trim() || !user) return
+  if (!comment.value.trim() || !user.value) return
 
   isSending.value = true
 
   try {
     await api.post('/comments', {
       postId: id,
-      user: user.name,
+      user: user.value.name,
       content: comment.value,
       time: new Date()
     })
@@ -230,7 +356,7 @@ const addComment = async () => {
     await loadData()
   } catch (error) {
     console.error('Lỗi khi gửi bình luận:', error)
-    alert('❌ Gửi bình luận thất bại!')
+    Swal.fire('Lỗi', 'Gửi bình luận thất bại!', 'error')
   } finally {
     isSending.value = false
   }

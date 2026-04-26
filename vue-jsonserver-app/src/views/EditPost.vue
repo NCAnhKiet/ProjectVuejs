@@ -41,12 +41,59 @@
 
               <div class="mb-3">
                 <label class="form-label fw-semibold">Nội dung</label>
-                <textarea
-                  v-model="post.content"
-                  class="form-control"
-                  rows="6"
-                  required
-                ></textarea>
+                <QuillEditor
+                  v-model:content="post.content"
+                  contentType="html"
+                  theme="snow"
+                  style="height: 300px;"
+                  placeholder="Viết nội dung bài viết của bạn..."
+                ></QuillEditor>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nhãn (Tags)</label>
+                 <div class="input-group mb-2 position-relative">
+                  <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                  <input 
+                    v-model="tagInput"
+                    @keydown.enter.prevent="addTag"
+                    @keydown.comma.prevent="addTag"
+                    @input="showSuggestions = true"
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Nhập tag (nhấn Enter để thêm)..."
+                  >
+                  <button class="btn btn-outline-secondary" type="button" @click="addTag">Thêm</button>
+
+                  <!-- Suggestions Dropdown -->
+                  <div v-if="showSuggestions && filteredSuggestions.length > 0" class="tag-suggestions shadow-sm border rounded">
+                    <div 
+                      v-for="suggestion in filteredSuggestions" 
+                      :key="suggestion.name"
+                      class="suggestion-item p-2"
+                      @click="selectSuggestion(suggestion.name)"
+                    >
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary">#{{ suggestion.name }}</span>
+                        <div>
+                          <span v-if="suggestion.count > 5" class="badge bg-danger me-2" style="font-size: 0.6rem;">Phổ biến</span>
+                          <small class="text-muted">{{ suggestion.count }} bài viết</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <span 
+                    v-for="(tag, index) in post.tags" 
+                    :key="index"
+                    class="badge bg-primary d-flex align-items-center p-2"
+                  >
+                    #{{ tag }}
+                    <i class="bi bi-x-circle ms-2" style="cursor: pointer;" @click="removeTag(index)"></i>
+                  </span>
+                </div>
+                <div class="form-text">Tối đa 5 tags.</div>
               </div>
 
               <div class="d-flex gap-2">
@@ -72,17 +119,76 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
+import Swal from 'sweetalert2'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
 
 const post = ref({})
 const loading = ref(true)
 const previewImage = ref(null)
 const fileInput = ref(null)
+const tagInput = ref('')
+const existingTags = ref([])
+const showSuggestions = ref(false)
+
+const fetchExistingTags = async () => {
+  try {
+    const res = await api.get('/posts')
+    const allPosts = res.data
+    const tagCounts = {}
+    allPosts.forEach(post => {
+      if (post.tags) {
+        post.tags.forEach(tag => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        })
+      }
+    })
+    existingTags.value = Object.entries(tagCounts).map(([name, count]) => ({
+      name,
+      count
+    })).sort((a, b) => b.count - a.count)
+  } catch (error) {
+    console.error('Lỗi khi tải tags:', error)
+  }
+}
+
+const filteredSuggestions = computed(() => {
+  const input = tagInput.value.trim().toLowerCase().replace(/^#/, '')
+  if (!input) return []
+  return existingTags.value.filter(t => 
+    t.name.toLowerCase().includes(input) && !(post.value.tags && post.value.tags.includes(t.name))
+  ).slice(0, 5)
+})
+
+const selectSuggestion = (tagName) => {
+  if (!post.value.tags) post.value.tags = []
+  if (!post.value.tags.includes(tagName) && post.value.tags.length < 5) {
+    post.value.tags.push(tagName)
+  }
+  tagInput.value = ''
+  showSuggestions.value = false
+}
+
+const addTag = () => {
+  if (!post.value.tags) post.value.tags = []
+  const val = tagInput.value.trim().replace(/^#/, '').replace(/,/g, '')
+  if (val && !post.value.tags.includes(val) && post.value.tags.length < 5) {
+    post.value.tags.push(val)
+  }
+  tagInput.value = ''
+  showSuggestions.value = false
+}
+
+const removeTag = (index) => {
+  post.value.tags.splice(index, 1)
+}
 
 const resizeImage = (file, max = 800) => {
   return new Promise(resolve => {
@@ -101,10 +207,8 @@ const resizeImage = (file, max = 800) => {
 }
 
 
-const user = JSON.parse(localStorage.getItem('user') || '{}')
-
 onMounted(async () => {
-  if (!user.id) {
+  if (!user.value || !user.value.id) {
     router.push('/login')
     return
   }
@@ -113,16 +217,21 @@ onMounted(async () => {
     const res = await api.get(`/posts/${route.params.id}`)
     post.value = res.data
 
-    if (post.value.userId !== user.id) {
-      alert('Bạn không có quyền sửa bài này')
+    if (!post.value.tags) {
+      post.value.tags = []
+    }
+
+    if (post.value.userId !== user.value.id) {
+      Swal.fire('Cảnh báo', 'Bạn không có quyền sửa bài này', 'warning')
       router.push('/')
     }
 
   } catch (err) {
-    alert('Không tìm thấy bài viết')
+    Swal.fire('Lỗi', 'Không tìm thấy bài viết', 'error')
     router.push('/')
   } finally {
     loading.value = false
+    fetchExistingTags()
   }
 })
 
@@ -132,7 +241,7 @@ const handleImage = async (e) => {
   if (!file) return
 
   if (file.size > 2 * 1024 * 1024) {
-    alert('Ảnh phải nhỏ hơn 2MB')
+    Swal.fire('Cảnh báo', 'Ảnh phải nhỏ hơn 2MB', 'warning')
     return
   }
 
@@ -151,10 +260,40 @@ const removeImage = () => {
 const updatePost = async () => {
   try {
     await api.put(`/posts/${route.params.id}`, post.value)
-    alert('✅ Cập nhật thành công!')
-    router.push('/')
+    Swal.fire({
+      icon: 'success',
+      title: 'Thành công!',
+      text: 'Cập nhật bài viết thành công!',
+      timer: 1500,
+      showConfirmButton: false
+    })
+    setTimeout(() => {
+      router.push('/')
+    }, 1500)
   } catch (err) {
-    alert('❌ Cập nhật thất bại!')
+    Swal.fire('Lỗi', 'Cập nhật bài viết thất bại!', 'error')
   }
 }
 </script>
+
+<style scoped>
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.suggestion-item:hover {
+  background: #f8f9fa;
+}
+</style>

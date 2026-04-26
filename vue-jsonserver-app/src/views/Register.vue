@@ -12,19 +12,7 @@
               <p class="text-muted">Tạo tài khoản mới để bắt đầu</p>
             </div>
 
-            <!-- Alert Message -->
-            <div 
-              v-if="errorMessage" 
-              class="alert alert-danger alert-dismissible fade show" 
-              role="alert"
-            >
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
-              <button 
-                type="button" 
-                class="btn-close" 
-                @click="errorMessage = ''"
-              ></button>
-            </div>
+
 
             <!-- Register Form -->
             <form @submit.prevent="register">
@@ -137,7 +125,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 import emailjs from '@emailjs/browser'
-
+import Swal from 'sweetalert2'
 
 const name = ref('')
 const email = ref('')
@@ -145,32 +133,30 @@ const password = ref('')
 const confirmPassword = ref('')
 const showPassword = ref(false)
 const isRegistering = ref(false)
-const errorMessage = ref('')
 const router = useRouter()
 
 const register = async () => {
   if (!name.value || !email.value || !password.value || !confirmPassword.value) {
-    errorMessage.value = '⚠️ Vui lòng nhập đầy đủ thông tin!'
+    Swal.fire('Cảnh báo', 'Vui lòng nhập đầy đủ thông tin!', 'warning')
     return
   }
 
   if (password.value.length < 6) {
-    errorMessage.value = '⚠️ Mật khẩu phải có ít nhất 6 ký tự!'
+    Swal.fire('Cảnh báo', 'Mật khẩu phải có ít nhất 6 ký tự!', 'warning')
     return
   }
 
   if (password.value !== confirmPassword.value) {
-    errorMessage.value = '⚠️ Mật khẩu xác nhận không khớp!'
+    Swal.fire('Cảnh báo', 'Mật khẩu xác nhận không khớp!', 'warning')
     return
   }
 
   isRegistering.value = true
-  errorMessage.value = ''
 
   try {
     const existingUsers = await api.get(`/users?email=${email.value}`)
     if (existingUsers.data.length > 0) {
-      errorMessage.value = '❌ Email đã được đăng ký!'
+      Swal.fire('Cảnh báo', 'Email đã được đăng ký!', 'warning')
       isRegistering.value = false
       return
     }
@@ -200,14 +186,18 @@ const register = async () => {
       verifyCode
     })
 
-
-
-    alert('📧 Mã xác thực đã được gửi về email!')
+    Swal.fire({
+      icon: 'success',
+      title: 'Đăng ký thành công!',
+      text: 'Mã xác thực đã được gửi về email!',
+      timer: 2000,
+      showConfirmButton: false
+    })
     router.push(`/verify/${res.data.id}`)
 
   } catch (error) {
-  console.log('EMAIL ERROR:', error)
-  errorMessage.value = '❌ Không gửi được email!'
+    console.log('EMAIL ERROR:', error)
+    Swal.fire('Lỗi', 'Không gửi được email!', 'error')
   } finally {
     isRegistering.value = false
   }

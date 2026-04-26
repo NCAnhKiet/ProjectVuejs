@@ -12,19 +12,7 @@
               <p class="text-muted">Chào mừng bạn quay trở lại!</p>
             </div>
 
-            <!-- Alert Message -->
-            <div 
-              v-if="errorMessage" 
-              class="alert alert-danger alert-dismissible fade show" 
-              role="alert"
-            >
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
-              <button 
-                type="button" 
-                class="btn-close" 
-                @click="errorMessage = ''"
-              ></button>
-            </div>
+
 
             <!-- Login Form -->
             <form @submit.prevent="login">
@@ -125,24 +113,24 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import Swal from 'sweetalert2'
+import { useAuthStore } from '../stores/auth'
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(false)
 const isLoading = ref(false)
-const errorMessage = ref('')
 const router = useRouter()
+const authStore = useAuthStore()
 
 const login = async () => {
-  // Validation
   if (!email.value || !password.value) {
-    errorMessage.value = '⚠️ Vui lòng nhập đầy đủ thông tin!'
+    Swal.fire('Cảnh báo', 'Vui lòng nhập đầy đủ thông tin!', 'warning')
     return
   }
 
   isLoading.value = true
-  errorMessage.value = ''
 
   try {
     const res = await api.get(
@@ -152,35 +140,36 @@ const login = async () => {
     if (res.data.length) {
       const userData = res.data[0]
 
-      // ✅ CHECK VERIFY EMAIL
       if (!userData.isVerified) {
-        errorMessage.value = '📧 Tài khoản chưa xác thực email!'
+        Swal.fire('Cảnh báo', 'Tài khoản chưa xác thực email!', 'warning')
         isLoading.value = false
         return
       }
 
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(userData))
+      authStore.login(userData)
 
-      // Remember me
       if (rememberMe.value) {
         localStorage.setItem('rememberEmail', email.value)
       } else {
-        localStorage .removeItem('rememberEmail')
+        localStorage.removeItem('rememberEmail')
       }
 
-      errorMessage.value = ''
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công!',
+        text: 'Đăng nhập thành công',
+        timer: 1500,
+        showConfirmButton: false
+      })
 
-      // Redirect
       await router.push('/')
-      location.reload()
     } else {
-      errorMessage.value = '❌ Email hoặc mật khẩu không đúng!'
+      Swal.fire('Lỗi', 'Email hoặc mật khẩu không đúng!', 'error')
       isLoading.value = false
     }
   } catch (err) {
     console.error(err)
-    errorMessage.value = '🔌 Không thể kết nối đến server. Vui lòng thử lại!'
+    Swal.fire('Lỗi', 'Không thể kết nối đến server. Vui lòng thử lại!', 'error')
     isLoading.value = false
   }
 }
