@@ -10,7 +10,8 @@
       "verifyCode": null,
       "following": [
         "11a2"
-      ]
+      ],
+      "isOnline": true
     },
     {
       "id": "11a2",
@@ -22,7 +23,8 @@
       "verifyCode": null,
       "following": [
         "f2ed"
-      ]
+      ],
+      "isOnline": true
     },
     {
       "id": "e46d",
@@ -159,7 +161,7 @@
       "content": "cái này đẹp",
       "sharedPostId": "283c",
       "createdAt": "2026-04-26T14:48:58.321Z",
-      "isRead": false
+      "isRead": true
     }
   ],
   "friendRequests": [
@@ -178,6 +180,13 @@
       "user": "Kiệt",
       "content": "quá đẹp",
       "time": "2026-04-26T14:50:46.401Z"
+    },
+    {
+      "id": "83a2",
+      "postId": "283c",
+      "user": "Kiệt",
+      "content": "xịn",
+      "time": "2026-04-28T03:04:55.253Z"
     }
   ]
 }

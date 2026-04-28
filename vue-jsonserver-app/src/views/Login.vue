@@ -33,7 +33,10 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label">Mật khẩu</label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label mb-0">Mật khẩu</label>
+                  <router-link to="/forgot-password" class="text-decoration-none small">Quên mật khẩu?</router-link>
+                </div>
                 <div class="input-group">
                   <span class="input-group-text">
                     <i class="bi bi-lock"></i>
@@ -145,6 +148,10 @@ const login = async () => {
         isLoading.value = false
         return
       }
+
+      // Set online status
+      await api.patch(`/users/${userData.id}`, { isOnline: true })
+      userData.isOnline = true
 
       authStore.login(userData)
 

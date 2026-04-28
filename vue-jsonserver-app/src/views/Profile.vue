@@ -62,9 +62,10 @@
               <button 
                 v-else-if="friendshipStatus === 'accepted'"
                 class="btn btn-light rounded-pill px-4"
-                disabled
+                @click="unfriend"
+                title="Bấm để hủy kết bạn"
               >
-                <i class="bi bi-people-fill me-1"></i> Bạn bè
+                <i class="bi bi-person-check-fill me-1 text-primary"></i> Bạn bè
               </button>
 
               <button 
@@ -184,8 +185,20 @@
                   <hr class="my-4">
                   
                   <div class="col-12">
-                    <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i>Đổi mật khẩu</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2"></i>Đổi mật khẩu</h6>
+                      <router-link :to="`/forgot-password?email=${targetUser.email}`" class="text-decoration-none small">Quên mật khẩu?</router-link>
+                    </div>
                     <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label small">Mật khẩu cũ</label>
+                        <input 
+                          v-model="oldPassword" 
+                          type="password"
+                          class="form-control rounded-pill px-3"
+                          placeholder="Nhập mật khẩu cũ"
+                        >
+                      </div>
                       <div class="col-md-6">
                         <label class="form-label small">Mật khẩu mới</label>
                         <div class="input-group">
@@ -238,6 +251,7 @@ const authStore = useAuthStore()
 
 const activeTab = ref('posts')
 const showPassword = ref(false)
+const oldPassword = ref('')
 const isUpdating = ref(false)
 const myPosts = ref([])
 const loadingPosts = ref(false)
@@ -333,6 +347,34 @@ const handleFriendRequest = async (accept) => {
   }
 }
 
+const unfriend = async () => {
+  const result = await Swal.fire({
+    title: 'Hủy kết bạn?',
+    text: "Bạn có chắc muốn hủy kết bạn với người này?",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Hủy kết bạn',
+    cancelButtonText: 'Đóng'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const request = await friendService.checkFriendship(user.value.id, targetUser.value.id)
+      if (request) {
+        await api.delete(`/friendRequests/${request.id}`)
+        Swal.fire({ icon: 'success', title: 'Đã hủy kết bạn', timer: 1500, showConfirmButton: false })
+        friendshipStatus.value = 'none'
+        friendCount.value--
+      }
+    } catch (error) {
+      console.error(error)
+      Swal.fire('Lỗi', 'Không thể hủy kết bạn', 'error')
+    }
+  }
+}
+
 const fetchFollowerCount = async (userId) => {
   try {
     const res = await api.get('/users')
@@ -402,6 +444,18 @@ const updateProfile = async () => {
     return
   }
 
+  // Yêu cầu mật khẩu cũ nếu muốn đổi mật khẩu
+  if (editUser.value.password) {
+    if (!oldPassword.value) {
+      Swal.fire('Cảnh báo', 'Vui lòng nhập mật khẩu cũ để thay đổi mật khẩu!', 'warning')
+      return
+    }
+    if (oldPassword.value !== targetUser.value.password) {
+      Swal.fire('Lỗi', 'Mật khẩu cũ không chính xác!', 'error')
+      return
+    }
+  }
+
   isUpdating.value = true
 
   try {
@@ -416,6 +470,9 @@ const updateProfile = async () => {
     // Cập nhật targetUser để hiển thị thay đổi ngay
     targetUser.value = { ...targetUser.value, ...updateData }
     authStore.updateUser(targetUser.value)
+    
+    oldPassword.value = ''
+    editUser.value.password = ''
     
     Swal.fire({
       icon: 'success',

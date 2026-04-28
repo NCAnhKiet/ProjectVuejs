@@ -60,7 +60,12 @@
               </div>
               <div>
                 <h6 class="mb-0 fw-bold">{{ getUserName(activeChatId) }}</h6>
-                <small class="text-success"><i class="bi bi-circle-fill me-1 small"></i> Đang hoạt động</small>
+                <small v-if="isUserOnline(activeChatId)" class="text-success">
+                  <i class="bi bi-circle-fill me-1 small"></i> Đang hoạt động
+                </small>
+                <small v-else class="text-muted">
+                  <i class="bi bi-circle-fill me-1 small text-secondary"></i> Ngoại tuyến
+                </small>
               </div>
             </div>
 
@@ -316,6 +321,11 @@ const getUserName = (userId) => {
   return u ? u.name : 'Người dùng hệ thống'
 }
 
+const isUserOnline = (userId) => {
+  const u = allUsers.value.find(u => String(u.id) === String(userId))
+  return u ? !!u.isOnline : false
+}
+
 const getUserInitials = (userId) => {
   const name = getUserName(userId)
   const names = name.split(' ')
@@ -362,10 +372,14 @@ onMounted(() => {
     }
 
     try {
-      const res = await messageService.getConversations(user.value.id)
+      const [res, usersRes] = await Promise.all([
+        messageService.getConversations(user.value.id),
+        api.get('/users')
+      ])
       if (res && Array.isArray(res) && res.length > 0) {
         conversations.value = res
       }
+      allUsers.value = usersRes.data
     } catch (e) { console.error(e) }
   }, 5000)
 })

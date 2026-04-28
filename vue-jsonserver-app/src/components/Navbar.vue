@@ -96,6 +96,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import messageService from '../services/messageService'
 import friendService from '../services/friendService'
+import api from '../services/api'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -132,13 +133,32 @@ const fetchNotifications = async () => {
   }
 }
 
+const setOfflineOnUnload = () => {
+  if (user.value) {
+    fetch(`http://localhost:3000/users/${user.value.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isOnline: false }),
+      keepalive: true
+    }).catch(e => console.error(e))
+  }
+}
+
 onMounted(() => {
   fetchNotifications()
   pollInterval = setInterval(fetchNotifications, 5000) 
+  
+  // Set online status when app loads with existing session
+  if (user.value) {
+    api.patch(`/users/${user.value.id}`, { isOnline: true }).catch(e => console.error(e))
+  }
+  
+  window.addEventListener('beforeunload', setOfflineOnUnload)
 })
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
+  window.removeEventListener('beforeunload', setOfflineOnUnload)
 })
 
 const logout = async () => {
@@ -154,6 +174,14 @@ const logout = async () => {
   })
 
   if (result.isConfirmed) {
+    if (user.value) {
+      try {
+        await api.patch(`/users/${user.value.id}`, { isOnline: false })
+      } catch (e) {
+        console.error('Failed to set offline status', e)
+      }
+    }
+    
     authStore.logout()
     router.push('/login')
     Swal.fire({
