@@ -6,8 +6,9 @@
         <div class="card shadow-sm mb-4 border-0 overflow-hidden rounded-4">
           <div class="profile-cover"></div>
           <div class="card-body text-center pt-0 pb-4">
-            <div class="avatar-lg mx-auto mb-3 border border-4 border-white">
-              {{ userInitials }}
+            <div class="avatar-lg mx-auto mb-3 border border-4 border-white position-relative overflow-hidden" 
+                 :style="targetUser.avatar ? `background-image: url(${targetUser.avatar}); background-size: cover; background-position: center;` : ''">
+              <span v-if="!targetUser.avatar">{{ userInitials }}</span>
             </div>
             <h3 class="fw-bold mb-1">
               {{ targetUser.name }}
@@ -160,6 +161,18 @@
                     <label class="text-muted small text-uppercase fw-bold">Ngày tham gia</label>
                     <div class="fw-semibold fs-5">{{ formatDate(targetUser.createdAt) }}</div>
                   </div>
+                  <div class="col-sm-12" v-if="targetUser.bio">
+                    <label class="text-muted small text-uppercase fw-bold">Tiểu sử</label>
+                    <div class="fw-semibold fs-6 fst-italic text-secondary mt-1">"{{ targetUser.bio }}"</div>
+                  </div>
+                  <div class="col-sm-6" v-if="targetUser.location">
+                    <label class="text-muted small text-uppercase fw-bold">Nơi sống</label>
+                    <div class="fw-semibold fs-5"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ targetUser.location }}</div>
+                  </div>
+                  <div class="col-sm-6" v-if="targetUser.job">
+                    <label class="text-muted small text-uppercase fw-bold">Công việc</label>
+                    <div class="fw-semibold fs-5"><i class="bi bi-briefcase-fill text-primary me-1"></i> {{ targetUser.job }}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -180,6 +193,37 @@
                     <label class="form-label fw-semibold">Email</label>
                     <input v-model="editUser.email" type="email" class="form-control rounded-pill px-3" required disabled>
                     <small class="text-muted">Email không thể thay đổi</small>
+                  </div>
+                  <div class="col-md-12 text-center mb-3">
+                    <label class="form-label fw-semibold d-block text-start">Ảnh đại diện</label>
+                    <div class="position-relative d-inline-block mt-2" style="width: 130px; height: 130px; cursor: pointer;" @click="triggerAvatarUpload" title="Chọn ảnh mới">
+                      <div class="rounded-circle border border-3 shadow-sm overflow-hidden bg-light" style="width: 100%; height: 100%;">
+                        <img v-if="editUser.avatar" :src="editUser.avatar" class="w-100 h-100" style="object-fit: cover;" alt="Avatar">
+                        <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center text-secondary fs-1 fw-bold">
+                          {{ userInitials }}
+                        </div>
+                      </div>
+                      <div class="position-absolute bg-white border rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 36px; height: 36px; bottom: 5px; right: 5px; transition: 0.2s;">
+                        <i class="bi bi-camera-fill text-dark fs-5"></i>
+                      </div>
+                    </div>
+                    <input type="file" ref="avatarInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp" @change="handleAvatarUpload">
+                    <div class="small text-muted mt-2">Nhấp vào khung ảnh để tải lên từ thiết bị (Tối đa 2MB)</div>
+                    <button v-if="editUser.avatar" @click="editUser.avatar = ''" type="button" class="btn btn-sm btn-outline-danger mt-2 rounded-pill px-3">
+                      <i class="bi bi-trash-fill me-1"></i> Gỡ ảnh hiện tại
+                    </button>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label fw-semibold">Tiểu sử</label>
+                    <textarea v-model="editUser.bio" class="form-control rounded-4 px-3 py-2" rows="2" placeholder="Một vài điều về bạn..."></textarea>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nơi sống</label>
+                    <input v-model="editUser.location" type="text" class="form-control rounded-pill px-3" placeholder="Ví dụ: TP. HCM">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">Công việc</label>
+                    <input v-model="editUser.job" type="text" class="form-control rounded-pill px-3" placeholder="Ví dụ: Lập trình viên">
                   </div>
                   
                   <hr class="my-4">
@@ -233,16 +277,18 @@
       </div>
     </div>
   </div>
+
 </template>
 
 
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../services/api'
 import friendService from '../services/friendService'
 import Swal from 'sweetalert2'
+import * as bootstrap from 'bootstrap'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -263,6 +309,32 @@ const friendRequestId = ref(null)
 const user = computed(() => authStore.user)
 const targetUser = ref({})
 const editUser = ref({}) // Dùng cho form edit trong Cài đặt
+const avatarInput = ref(null)
+
+const triggerAvatarUpload = () => {
+  if (avatarInput.value) {
+    avatarInput.value.click()
+  }
+}
+
+const handleAvatarUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Check file size (2MB max)
+  if (file.size > 2 * 1024 * 1024) {
+    Swal.fire('Lỗi', 'Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.', 'error')
+    event.target.value = ''
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editUser.value.avatar = e.target.result
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
+}
 
 const isOwnProfile = computed(() => {
   if (!user.value || !targetUser.value) return false

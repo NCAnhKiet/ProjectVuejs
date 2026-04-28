@@ -83,7 +83,16 @@
           :class="activeTab === 'following' ? 'active' : 'bg-light text-dark border'"
           @click="activeTab = 'following'"
         >
-          <i class="bi bi-people me-1"></i>Đang theo dõi
+          <i class="bi bi-person-lines-fill me-1"></i>Đang theo dõi
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link rounded-pill px-4" 
+          :class="activeTab === 'friends' ? 'active' : 'bg-light text-dark border'"
+          @click="activeTab = 'friends'"
+        >
+          <i class="bi bi-people-fill me-1"></i>Bạn bè
         </button>
       </li>
     </ul>
@@ -96,15 +105,15 @@
           <i class="bi bi-inbox"></i>
         </div>
         <h4 class="text-muted">
-          {{ activeTab === 'following' ? 'Chưa có bài viết nào từ người bạn theo dõi' : (searchQuery || selectedTag ? 'Không tìm thấy bài viết nào' : 'Chưa có bài viết nào') }}
+          {{ activeTab === 'following' ? 'Chưa có bài viết nào từ người bạn theo dõi' : (activeTab === 'friends' ? 'Chưa có bài viết nào từ bạn bè' : (searchQuery || selectedTag ? 'Không tìm thấy bài viết nào' : 'Chưa có bài viết nào')) }}
         </h4>
         <p class="text-muted">
-          {{ activeTab === 'following' ? 'Hãy theo dõi thêm nhiều tác giả để xem bài viết của họ!' : (searchQuery || selectedTag ? 'Thử thay đổi bộ lọc tìm kiếm' : 'Hãy là người đầu tiên viết bài!') }}
+          {{ activeTab === 'following' ? 'Hãy theo dõi thêm nhiều tác giả để xem bài viết của họ!' : (activeTab === 'friends' ? 'Hãy kết nối thêm nhiều bạn bè!' : (searchQuery || selectedTag ? 'Thử thay đổi bộ lọc tìm kiếm' : 'Hãy là người đầu tiên viết bài!')) }}
         </p>
         <router-link v-if="user && !searchQuery && !selectedTag && activeTab === 'discovery'" class="btn btn-primary mt-3" to="/create">
           <i class="bi bi-pencil-square me-1"></i>Viết bài đầu tiên
         </router-link>
-        <button v-if="activeTab === 'following'" class="btn btn-outline-primary mt-3" @click="activeTab = 'discovery'">
+        <button v-if="activeTab === 'following' || activeTab === 'friends'" class="btn btn-outline-primary mt-3" @click="activeTab = 'discovery'">
           <i class="bi bi-search me-1"></i>Khám phá ngay
         </button>
       </div>
@@ -120,7 +129,9 @@
           <!-- Author Info -->
           <div class="d-flex align-items-center mb-3">
             <router-link :to="`/user/${p.userId}`" class="text-decoration-none">
-              <div class="avatar-sm me-2">
+              <div class="avatar-sm me-2 rounded-circle" style="background-size: cover; background-position: center;" v-if="p.user && p.user.avatar" :style="`background-image: url(${p.user.avatar});`">
+              </div>
+              <div class="avatar-sm me-2" v-else>
                 {{ getInitials(p.author) }}
               </div>
             </router-link>
@@ -245,12 +256,13 @@ const posts = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
 const selectedTag = ref('')
-const activeTab = ref('discovery') // 'discovery' or 'following'
+const activeTab = ref('discovery') // 'discovery', 'following', or 'friends'
 const visibleLimit = ref(5) // Hiển thị 5 bài đầu tiên
 const router = useRouter()
 const authStore = useAuthStore()
 const shareModalRef = ref(null)
 const selectedPostId = ref(null)
+const myFriendIds = ref([])
 
 const user = computed(() => authStore.user)
 
@@ -270,6 +282,11 @@ const filteredPosts = computed(() => {
   if (activeTab.value === 'following' && user.value) {
     const followingIds = user.value.following || []
     result = result.filter(p => followingIds.includes(p.userId))
+  }
+
+  // Lọc theo Tab (Bạn bè)
+  if (activeTab.value === 'friends' && user.value) {
+    result = result.filter(p => myFriendIds.value.includes(p.userId))
   }
 
   // Lọc theo tag
@@ -453,10 +470,31 @@ const deletePost = async (id) => {
 onMounted(async () => {
   try {
     const res = await api.get('/posts')
-    posts.value = res.data.reverse() // Mới nhất lên trước
+    const postsData = res.data.reverse() // Mới nhất lên trước
+
+    // Fetch users for avatars
+    const usersRes = await api.get('/users')
+    const userMap = {}
+    usersRes.data.forEach(u => { userMap[u.id] = u })
+
+    postsData.forEach(p => {
+      p.user = userMap[p.userId]
+    })
+
+    posts.value = postsData
     loading.value = false
+
+    // Fetch friends if user is logged in
+    if (user.value) {
+      const friendsRes = await api.get('/friendRequests')
+      const accepted = friendsRes.data.filter(r => 
+        r.status === 'accepted' && 
+        (String(r.senderId) === String(user.value.id) || String(r.receiverId) === String(user.value.id))
+      )
+      myFriendIds.value = accepted.map(r => String(r.senderId) === String(user.value.id) ? String(r.receiverId) : String(r.senderId))
+    }
   } catch (error) {
-    console.error('Lỗi khi tải bài viết:', error)
+    console.error('Lỗi khi tải dữ liệu trang chủ:', error)
     loading.value = false
   }
 })

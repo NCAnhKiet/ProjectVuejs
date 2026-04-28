@@ -12,7 +12,9 @@
           <div class="card-body p-4">
             <!-- Author Info -->
             <div class="d-flex align-items-center mb-3">
-              <div class="avatar-sm me-2">
+              <div class="avatar-sm me-2 rounded-circle" style="background-size: cover; background-position: center;" v-if="post.user && post.user.avatar" :style="`background-image: url(${post.user.avatar});`">
+              </div>
+              <div class="avatar-sm me-2" v-else>
                 {{ getInitials(post.author) }}
               </div>
               <div>
@@ -330,7 +332,18 @@ const formatDate = (date) => {
 const loadData = async () => {
   try {
     const p = await api.get(`/posts/${id}`)
-    post.value = p.data
+    const postData = p.data
+
+    try {
+      if (postData.userId) {
+        const uRes = await api.get(`/users/${postData.userId}`)
+        postData.user = uRes.data
+      }
+    } catch (e) {
+      console.error('Không tải được thông tin người dùng cho bài viết:', e)
+    }
+    
+    post.value = postData
 
     const c = await api.get(`/comments?postId=${id}`)
     comments.value = c.data.reverse() // Mới nhất lên trước

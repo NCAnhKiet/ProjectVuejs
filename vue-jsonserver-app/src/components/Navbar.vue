@@ -61,7 +61,8 @@
                 role="button" 
                 data-bs-toggle="dropdown"
               >
-                <span class="user-avatar me-2">{{ userInitials }}</span>
+                <span v-if="user.avatar" class="user-avatar me-2 bg-image" :style="`background-image: url(${user.avatar}); background-size: cover; background-position: center; border: 2px solid white;`"></span>
+                <span v-else class="user-avatar me-2">{{ userInitials }}</span>
                 <span class="d-none d-lg-inline">{{ user.name }}</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
