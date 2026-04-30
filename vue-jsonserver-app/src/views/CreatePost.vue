@@ -1,21 +1,16 @@
 <template>
-  <div class="container mt-4">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Tạo bài viết mới</h2>
-          <button class="btn btn-outline-secondary" @click="router.push('/')">
-           <i class="bi bi-arrow-left me-1"></i>Quay lại
-          </button>
-        </div>
+  <div class="app-container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary" style="border-bottom-color: #333 !important;">
+      <h4 class="fw-bold m-0 text-light">Tạo bài viết mới</h4>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" @click="router.push('/')">
+        Hủy
+      </button>
+    </div>
 
-
-
-        <!-- Form Card -->
-        <div class="card shadow-sm">
-          <div class="card-body p-4">
-            <form @submit.prevent="addPost">
+    <!-- Form -->
+    <div>
+      <form @submit.prevent="addPost">
               <div class="mb-3">
   <label class="form-label fw-semibold">Ảnh bài viết</label>
   <input 
@@ -112,10 +107,10 @@
               <div class="d-grid gap-2">
                 <button 
                   type="submit"
-                  class="btn btn-primary btn-lg" 
+                  class="btn btn-light rounded-pill fw-bold py-2" 
                   :disabled="!canPublish || isPublishing"
                 >
-                  <span v-if="!isPublishing"><i class="bi bi-send me-2"></i> Đăng bài</span>
+                  <span v-if="!isPublishing">Đăng bài</span>
                   <span v-else>
                     <span class="spinner-border spinner-border-sm me-2"></span>
                     Đang đăng...
@@ -123,65 +118,38 @@
                 </button>
                 <button 
                   type="button"
-                  class="btn btn-outline-secondary" 
+                  class="btn btn-outline-secondary rounded-pill py-2" 
                   @click="saveDraft"
                 >
-                  <i class="bi bi-save me-2"></i> Lưu nháp
+                  Lưu nháp
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-
-
-        <!-- Preview Card -->
-<div v-if="title || content || previewImage" class="card shadow-sm mt-4">
-  <div class="card-header bg-light">
-    <h5 class="mb-0">
-      <i class="bi bi-eye me-2"></i>Xem trước
-    </h5>
-  </div>
-
-  <div class="card-body">
-    <div class="row g-4 align-items-start">
-
-      <!-- Cột ảnh -->
-      <div v-if="previewImage" class="col-md-5">
-        <img
-          :src="previewImage"
-          class="img-fluid rounded"
-          style="max-height:350px; object-fit:cover;"
-        />
-      </div>
-
-      <!-- Cột nội dung -->
-      <div :class="previewImage ? 'col-md-7' : 'col-12'">
-        <h3 class="fw-bold">
-          {{ title || 'Chưa có tiêu đề' }}
-        </h3>
-
-        <div class="mt-3 ql-editor px-0" style="line-height: 1.8;" v-html="content || 'Chưa có nội dung...'">
-        </div>
-
-        <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
-          <div class="avatar-sm">
-            {{ userInitials }}
-          </div>
-          <div>
-            <div class="fw-semibold">
-              {{ user?.name || 'Anonymous' }}
-            </div>
-            <small class="text-muted">
-              {{ formatDate(new Date()) }}
-            </small>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
-</div>
 
+
+    <!-- Preview Card -->
+    <div v-if="title || content || previewImage" class="mt-5 border-top border-secondary pt-4" style="border-top-color: #333 !important;">
+      <h5 class="fw-bold text-muted mb-4">Xem trước</h5>
+
+      <div class="feed-post border-0">
+        <div class="feed-post-left">
+          <div class="feed-avatar">
+            <span style="color: #fff; display: flex; height: 100%; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">{{ userInitials }}</span>
+          </div>
+        </div>
+        
+        <div class="feed-post-right">
+          <div class="feed-header">
+            <span class="feed-author">{{ user?.name || 'Anonymous' }}</span>
+            <span class="feed-time">Vừa xong</span>
+          </div>
+          
+          <div v-if="title" class="fw-bold mb-2 mt-1" style="font-size: 1.1rem; color: #f3f5f7;">{{ title }}</div>
+          <div class="feed-content ql-editor px-0" v-html="content || '...'"></div>
+          
+          <img v-if="previewImage" :src="previewImage" class="feed-image mt-2" />
+        </div>
       </div>
     </div>
   </div>
@@ -422,9 +390,11 @@ onMounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: white;
+  background: #181818;
+  border: 1px solid #333;
   max-height: 200px;
   overflow-y: auto;
+  border-radius: 8px;
 }
 
 .suggestion-item {
@@ -433,6 +403,6 @@ onMounted(() => {
 }
 
 .suggestion-item:hover {
-  background: #f8f9fa;
+  background: #222;
 }
 </style>

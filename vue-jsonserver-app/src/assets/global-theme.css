@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body {
+  background-color: #101010;
+  color: #f3f5f7;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base resets */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Threads layout */
+.app-container {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Navbar overrides */
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(16, 16, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+}
+
+.app-nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.app-nav-brand {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.05em;
+  color: #f3f5f7;
+}
+
+.app-nav-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.app-nav-item {
+  width: 68px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #4d4d4d;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.app-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.app-nav-item.active {
+  color: #f3f5f7;
+}
+
+.app-nav-action {
+  background-color: #f3f5f7;
+  color: #101010;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: opacity 0.2s;
+}
+
+.app-nav-action:hover {
+  opacity: 0.8;
+}
+
+/* Card / Post Overrides */
+.feed-post {
+  display: flex;
+  padding: 16px 0;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.feed-post-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.feed-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #2d2d2d;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.feed-line {
+  width: 2px;
+  background-color: #333;
+  flex-grow: 1;
+  margin-top: 8px;
+  border-radius: 1px;
+}
+
+.feed-post-right {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.feed-author {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #f3f5f7;
+}
+
+.feed-time {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.feed-content {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #f3f5f7;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.feed-image {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid #2d2d2d;
+  margin-bottom: 12px;
+}
+
+.feed-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.feed-action-btn {
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #f3f5f7;
+}
+
+/* Modal styling */
+.app-modal .modal-content {
+  background-color: #181818;
+  border: 1px solid #333;
+  border-radius: 16px;
+  color: #f3f5f7;
+}
+.app-modal .modal-header {
+  border-bottom: 1px solid #333;
+}
+.app-modal .modal-footer {
+  border-top: 1px solid #333;
+}
+.app-input {
+  background-color: transparent;
+  border: none;
+  color: #f3f5f7;
+  resize: none;
+  font-size: 1rem;
+}
+.app-input:focus {
+  outline: none;
+  box-shadow: none;
+  background-color: transparent;
+  color: #f3f5f7;
+}
+
+/* Sweetalert dark */
+div:where(.swal2-container) div:where(.swal2-popup) {
+  background: #181818;
+  color: #f3f5f7;
+  border-radius: 16px;
+  border: 1px solid #333;
+}
+div:where(.swal2-container) .swal2-title {
+  color: #f3f5f7;
+}
+div:where(.swal2-container) .swal2-html-container {
+  color: #aaa;
+}
+
+/* Bootstrap form overrides */
+.card {
+  background-color: #181818;
+  border: 1px solid #333;
+  color: #f3f5f7;
+}
+.form-control, .input-group-text {
+  background-color: #222;
+  border: 1px solid #444;
+  color: #f3f5f7;
+}
+.form-control:focus {
+  background-color: #2a2a2a;
+  border-color: #666;
+  color: #fff;
+  box-shadow: none;
+}
+.form-control::placeholder, .app-input::placeholder {
+  color: #aaa !important;
+}
+.form-control::file-selector-button {
+  background-color: #333;
+  color: #f3f5f7;
+  border-right: 1px solid #444;
+}
+.form-control:hover::file-selector-button {
+  background-color: #444;
+}
+.form-control:disabled, .form-control[readonly] {
+  background-color: #1a1a1a;
+  color: #777;
+  border-color: #333;
+}
+.input-group-text {
+  color: #aaa;
+}
+.text-muted, .form-text {
+  color: #aaa !important;
+}
+.form-label {
+  color: #f3f5f7;
+}
+.list-group-item {
+  background-color: #181818;
+  border-color: #333;
+  color: #f3f5f7;
+}
+.btn-primary {
+  background-color: #f3f5f7;
+  color: #101010;
+  border: none;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background-color: #e0e0e0;
+  color: #101010;
+}
+.btn-outline-secondary {
+  color: #aaa;
+  border-color: #444;
+}
+.btn-outline-secondary:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+/* Quill Editor Dark Theme */
+.ql-toolbar.ql-snow {
+  background-color: #181818;
+  border-color: #333 !important;
+}
+.ql-container.ql-snow {
+  background-color: #101010;
+  border-color: #333 !important;
+  color: #f3f5f7;
+}
+.ql-snow .ql-stroke {
+  stroke: #aaa;
+}
+.ql-snow .ql-fill {
+  fill: #aaa;
+}
+.ql-snow .ql-picker {
+  color: #aaa;
+}
+.ql-editor.ql-blank::before {
+  color: #777;
+}
+
+/* Fix text and backgrounds */
+.bg-white {
+  background-color: #181818 !important;
+}
+.bg-light {
+  background-color: #222 !important;
+}
+.bg-primary {
+  background-color: #333 !important;
+}
+.text-primary {
+  color: #f3f5f7 !important;
+}
+.text-dark {
+  color: #f3f5f7 !important;
+}
+.border {
+  border-color: #333 !important;
+}
+.border-top, .border-bottom, .border-start, .border-end {
+  border-color: #333 !important;
+}
+/* Editor / Tooltip / Miscellaneous overrides */
+.dropdown-menu {
+  background-color: #181818;
+  border: 1px solid #333;
+}
+.dropdown-item {
+  color: #f3f5f7;
+}
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: #222;
+  color: #fff;
+}
+.nav-tabs .nav-link.active {
+  background-color: transparent !important;
+  color: #f3f5f7 !important;
+  border-color: #333 #333 #181818 !important;
+}
+.nav-tabs .nav-link {
+  color: #777;
+}
+.nav-tabs .nav-link:hover {
+  color: #aaa;
+  border-color: transparent transparent #333 transparent;
+}
+
+/* Quill Editor Overrides */
+.ql-toolbar.ql-snow {
+  background-color: #222 !important;
+  border: 1px solid #444 !important;
+  border-bottom: none !important;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.ql-container.ql-snow {
+  background-color: #222 !important;
+  border: 1px solid #444 !important;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  color: #f3f5f7 !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+}
+.ql-editor.ql-blank::before {
+  color: #aaa !important;
+}
+.ql-snow .ql-stroke {
+  stroke: #aaa !important;
+}
+.ql-snow .ql-fill {
+  fill: #aaa !important;
+}
+.ql-snow .ql-picker {
+  color: #aaa !important;
+}
+.ql-snow .ql-picker-options {
+  background-color: #222 !important;
+  border: 1px solid #444 !important;
+}
+.ql-snow .ql-tooltip {
+  background-color: #222 !important;
+  border: 1px solid #444 !important;
+  color: #f3f5f7 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+}
+.ql-snow .ql-tooltip input[type=text] {
+  background-color: #181818 !important;
+  border: 1px solid #333 !important;
+  color: #f3f5f7 !important;
+}

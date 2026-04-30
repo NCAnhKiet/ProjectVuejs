@@ -10,6 +10,7 @@ import PostDetail from '../views/PostDetail.vue'
 import VerifyEmail from '../views/VerifyEmail.vue'
 import EditPost from '../views/EditPost.vue'
 import Friends from '../views/Friends.vue'
+import Explore from '../views/Explore.vue'
 
 const routes = [
     { path: '/', component: Home },
@@ -23,6 +24,7 @@ const routes = [
     { path: '/verify/:id', component: VerifyEmail },
     { path: '/edit/:id', component: EditPost },
     { path: '/friends', component: Friends, meta: { auth: true } },
+    { path: '/explore', component: Explore },
     { path: '/messages', component: () => import('../views/Messages.vue'), meta: { auth: true } }
 ]
 

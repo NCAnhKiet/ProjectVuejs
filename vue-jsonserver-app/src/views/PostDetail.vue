@@ -1,183 +1,147 @@
 <template>
-  <div class="container mt-4">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <!-- Back Button -->
-        <button class="btn btn-outline-secondary mb-3" @click="$router.push('/')">
-          <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
-        </button>
+  <div class="app-container mt-3">
+    
+    <!-- Top Nav Back Button -->
+    <div class="d-flex align-items-center mb-3" style="cursor: pointer;" @click="$router.push('/')">
+      <i class="bi bi-arrow-left fs-5 me-2 text-light"></i>
+      <span class="fw-semibold text-light">Quay lại</span>
+    </div>
 
-        <!-- Post Card -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-body p-4">
-            <!-- Author Info -->
-            <div class="d-flex align-items-center mb-3">
-              <div class="avatar-sm me-2 rounded-circle" style="background-size: cover; background-position: center;" v-if="post.user && post.user.avatar" :style="`background-image: url(${post.user.avatar});`">
-              </div>
-              <div class="avatar-sm me-2" v-else>
-                {{ getInitials(post.author) }}
-              </div>
-              <div>
-                <div class="fw-semibold d-flex align-items-center gap-2">
-                  <i class="bi bi-person me-1"></i>
-                  <router-link :to="`/user/${post.userId}`" class="text-dark text-decoration-none hover-primary">
-                    {{ post.author }}
-                  </router-link>
-                  <!-- Follow Button -->
-                  <button 
-                    v-if="user && post.userId && post.userId !== user.id"
-                    class="btn btn-sm rounded-pill px-3 py-0"
-                    :class="isFollowing(post.userId) ? 'btn-secondary' : 'btn-outline-primary'"
-                    @click="toggleFollow(post.userId)"
-                  >
-                    {{ isFollowing(post.userId) ? 'Đang Follow' : '+ Follow' }}
-                  </button>
-                  <!-- Message Button -->
-                  <router-link 
-                    v-if="user && post.userId && post.userId !== user.id"
-                    :to="`/messages?u=${post.userId}`" 
-                    class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
-                  >
-                    <i class="bi bi-chat-text"></i>
-                  </router-link>
-                </div>
-                <small class="text-muted">
-                  <i class="bi bi-clock me-1"></i>{{ formatDate(post.createdAt) }}
-                </small>
-              </div>
-            </div>
+    <!-- Main Post -->
+    <div class="feed-post border-bottom-0 pb-0">
+      <div class="feed-post-left">
+        <router-link :to="`/user/${post.userId}`" class="text-decoration-none">
+          <div class="feed-avatar" :style="post.user && post.user.avatar ? `background-image: url(${post.user.avatar});` : ''">
+            <span v-if="!post.user || !post.user.avatar" style="color: #fff; display: flex; height: 100%; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">{{ getInitials(post.author) }}</span>
+          </div>
+        </router-link>
+        <div class="feed-line"></div>
+      </div>
 
-            <!-- Post Title & Content -->
-<h2 class="fw-bold mb-3">{{ post.title }}</h2>
-
-<!-- Image -->
-<img
-  v-if="post.image"
-  :src="post.image"
-  class="img-fluid rounded mb-3"
-  style="max-height: 450px; object-fit: cover;"
-/>
-
-<div class="mt-3 ql-editor px-0" style="line-height: 1.8;" v-html="post.content || 'Đang tải nội dung...'">
-</div>
-
-
-            <!-- Post Stats & Social Actions -->
-            <div class="border-top pt-3 mt-4 d-flex justify-content-between align-items-center">
-              <small class="text-muted">
-                <i class="bi bi-card-text me-1"></i>{{ wordCount }} từ • 
-                <i class="bi bi-hourglass-split me-1"></i>{{ readingTime }} phút đọc
-              </small>
-
-              <div class="d-flex gap-3">
-                <!-- Like Button -->
-                <button 
-                  class="btn btn-sm d-flex align-items-center gap-1 border-0"
-                  :class="hasLiked ? 'text-danger' : 'text-muted'"
-                  @click="toggleLike"
-                >
-                  <i class="bi fs-5" :class="hasLiked ? 'bi-heart-fill' : 'bi-heart'"></i>
-                  <span class="fw-semibold">{{ post.likes?.length || 0 }}</span>
-                </button>
-
-                <!-- Share Button -->
-                <button 
-                  class="btn btn-sm text-muted d-flex align-items-center gap-1 border-0"
-                  @click="sharePost"
-                >
-                  <i class="bi bi-share fs-5"></i>
-                  <span>Chia sẻ</span>
-                </button>
-              </div>
-            </div>
+      <div class="feed-post-right">
+        <!-- Header -->
+        <div class="feed-header">
+          <div class="d-flex align-items-center gap-2">
+            <router-link :to="`/user/${post.userId}`" class="feed-author text-decoration-none">
+              {{ post.author }}
+            </router-link>
+            <!-- Follow Button -->
+            <button 
+              v-if="user && post.userId && post.userId !== user.id && !isFollowing(post.userId)"
+              class="btn btn-sm text-primary p-0 fw-semibold"
+              style="font-size: 0.9rem;"
+              @click="toggleFollow(post.userId)"
+            >
+              Theo dõi
+            </button>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="feed-time">{{ formatDate(post.createdAt) }}</span>
           </div>
         </div>
 
-        <!-- Comments Section -->
-        <div class="card shadow-sm">
-          <div class="card-header bg-white">
-            <h5 class="mb-0">
-              <i class="bi bi-chat-dots me-2"></i>Bình luận ({{ comments.length }})
-            </h5>
+        <!-- Post Title & Content -->
+        <div v-if="post.title" class="fw-bold mb-2 mt-1" style="font-size: 1.1rem; color: #f3f5f7;">{{ post.title }}</div>
+        <div class="feed-content" v-html="post.content || 'Đang tải nội dung...'"></div>
+        <img v-if="post.image" :src="post.image" class="feed-image mt-2" />
+
+        <!-- Stats -->
+        <div class="d-flex gap-3 text-muted mb-2" style="font-size: 0.85rem;">
+          <span>{{ wordCount }} từ</span>
+          <span>{{ readingTime }} phút đọc</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="feed-actions mb-3">
+          <button class="feed-action-btn" :style="hasLiked ? 'color: #ff3040;' : ''" @click="toggleLike">
+            <i class="bi" :class="hasLiked ? 'bi-heart-fill' : 'bi-heart'"></i>
+            <span v-if="post.likes && post.likes.length > 0" style="font-size: 0.85rem;">{{ post.likes.length }}</span>
+          </button>
+          <button class="feed-action-btn" @click="focusComment">
+            <i class="bi bi-chat"></i>
+            <span v-if="comments.length > 0" style="font-size: 0.85rem;">{{ comments.length }}</span>
+          </button>
+          <button class="feed-action-btn" :style="hasReposted ? 'color: #00ba7c;' : ''" @click="toggleRepost">
+            <i class="bi bi-arrow-repeat"></i>
+            <span v-if="post.reposts && post.reposts.length > 0" style="font-size: 0.85rem;">{{ post.reposts.length }}</span>
+          </button>
+          <button class="feed-action-btn" @click="sharePost">
+            <i class="bi bi-send"></i>
+            <span v-if="post.shares && post.shares.length > 0" style="font-size: 0.85rem;">{{ post.shares.length }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Divider -->
+    <div style="height: 1px; background-color: #333; margin-bottom: 12px; margin-left: 56px;"></div>
+
+    <!-- Comments Section -->
+    <div>
+      <div v-if="comments.length > 0">
+        <div v-for="(c, index) in comments" :key="c.id" class="feed-post border-bottom-0 pb-0">
+          <div class="feed-post-left">
+            <div class="feed-avatar">
+              <span style="color: #fff; display: flex; height: 100%; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">{{ getInitials(c.user) }}</span>
+            </div>
+            <div class="feed-line" v-if="index !== comments.length - 1"></div>
           </div>
-          <div class="card-body p-4">
-            <!-- Comment Form -->
-            <div v-if="user" class="mb-4">
-              <div class="d-flex gap-2 align-items-start">
-                <div class="avatar-sm flex-shrink-0">
-                  {{ userInitials }}
-                </div>
-                <div class="flex-grow-1">
-                  <textarea
-                    v-model="comment"
-                    class="form-control mb-2"
-                    rows="3"
-                    placeholder="Viết bình luận..."
-                  ></textarea>
-                  <button 
-                    class="btn btn-primary" 
-                    @click="addComment"
-                    :disabled="!comment.trim() || isSending"
-                  >
-                    <span v-if="!isSending">
-                      <i class="bi bi-send me-1"></i>Gửi bình luận
-                    </span>
-                    <span v-else>
-                      <span class="spinner-border spinner-border-sm me-2"></span>
-                      Đang gửi...
-                    </span>
-                  </button>
-                </div>
-              </div>
+          <div class="feed-post-right">
+            <div class="feed-header">
+              <span class="feed-author">{{ c.user }}</span>
+              <span class="feed-time">{{ formatDate(c.time) }}</span>
             </div>
-
-            <!-- Login prompt -->
-            <div v-else class="alert alert-info">
-              <i class="bi bi-lock me-1"></i>
-              Vui lòng <router-link to="/login">đăng nhập</router-link> để bình luận
-            </div>
-
-            <!-- Comments List -->
-            <div v-if="comments.length > 0">
-              <div 
-                v-for="c in comments" 
-                :key="c.id" 
-                class="d-flex gap-2 mb-3 pb-3 border-bottom"
-              >
-                <div class="avatar-sm flex-shrink-0">
-                  {{ getInitials(c.user) }}
-                </div>
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center gap-2 mb-1">
-                    <strong>
-                      <i class="bi bi-person-circle me-1"></i>{{ c.user }}
-                    </strong>
-                    <small class="text-muted">
-                      <i class="bi bi-clock me-1"></i>{{ formatDate(c.time) }}
-                    </small>
-                  </div>
-                  <p class="mb-0">{{ c.content }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Empty Comments -->
-            <div v-else class="text-center py-4 text-muted">
-              <div style="font-size: 48px;">
-                <i class="bi bi-chat-square-dots"></i>
-              </div>
-              <p class="mb-0">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+            <div class="feed-content mb-3" style="font-size: 0.95rem;">{{ c.content }}</div>
+            <div class="feed-actions mb-3">
+              <button class="feed-action-btn"><i class="bi bi-heart"></i></button>
+              <button class="feed-action-btn"><i class="bi bi-chat"></i></button>
             </div>
           </div>
         </div>
       </div>
+      <div v-else class="text-center py-4 text-muted" style="font-size: 0.9rem;">
+        Chưa có bình luận nào.
+      </div>
     </div>
+
+    <!-- Divider -->
+    <div style="height: 1px; background-color: #333; margin: 16px 0;"></div>
+
+    <!-- Comment Input -->
+    <div v-if="user" class="feed-post border-bottom-0 align-items-center mb-5 pb-4">
+      <div class="feed-post-left">
+        <div class="feed-avatar" :style="user.avatar ? `background-image: url(${user.avatar}); background-size: cover; background-position: center;` : ''">
+          <span v-if="!user.avatar" style="color: #fff; display: flex; height: 100%; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">{{ userInitials }}</span>
+        </div>
+      </div>
+      <div class="feed-post-right d-flex align-items-center">
+        <input 
+          ref="commentInput"
+          v-model="comment"
+          type="text"
+          class="app-input flex-grow-1"
+          placeholder="Trả lời..."
+          @keyup.enter="addComment"
+        />
+        <button 
+          class="app-nav-action px-3 py-1 ms-2"
+          :style="comment.trim() ? '' : 'opacity: 0.5;'"
+          @click="addComment"
+          :disabled="!comment.trim() || isSending"
+        >
+          Đăng
+        </button>
+      </div>
+    </div>
+    <div v-else class="text-center text-muted mb-5 pb-4">
+      Vui lòng <router-link to="/login" class="text-primary">đăng nhập</router-link> để trả lời.
+    </div>
+
   </div>
 
   <!-- Social Share Modal -->
   <ShareModal ref="shareModalRef" :postId="post.id" />
 </template>
-
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
@@ -193,6 +157,7 @@ const authStore = useAuthStore()
 const user = computed(() => authStore.user)
 const shareModalRef = ref(null)
 const id = route.params.id
+const commentInput = ref(null)
 
 const hasLiked = computed(() => {
   if (!user.value || !post.value.likes) return false
@@ -206,7 +171,7 @@ const isFollowing = (authorId) => {
 
 const toggleFollow = async (authorId) => {
   if (!user.value) {
-    Swal.fire('Thông báo', 'Vui lòng đăng nhập để theo dõi!', 'info')
+    Swal.fire({ title: 'Vui lòng đăng nhập', background: '#181818', color: '#fff', icon: 'info' })
     return
   }
 
@@ -222,24 +187,11 @@ const toggleFollow = async (authorId) => {
   try {
     await api.patch(`/users/${user.value.id}`, { following })
     authStore.updateUser({ following })
-    Swal.fire({
-      icon: 'success',
-      title: idx > -1 ? 'Đã bỏ theo dõi' : 'Đã theo dõi',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2000
-    })
-  } catch (error) {
-    console.error('Lỗi khi follow:', error)
-  }
+  } catch (error) {}
 }
 
 const toggleLike = async () => {
-  if (!user.value) {
-    Swal.fire('Thông báo', 'Vui lòng đăng nhập để thích bài viết!', 'info')
-    return
-  }
+  if (!user.value) return
 
   const likes = post.value.likes || []
   const userIdx = likes.indexOf(user.value.id)
@@ -253,16 +205,47 @@ const toggleLike = async () => {
   try {
     await api.patch(`/posts/${post.value.id}`, { likes })
     post.value.likes = likes
-  } catch (error) {
-    console.error('Lỗi khi thả tim:', error)
-  }
+  } catch (error) {}
 }
 
-const sharePost = () => {
+const hasReposted = computed(() => {
+  if (!user.value || !post.value.reposts) return false
+  return post.value.reposts.includes(user.value.id)
+})
+
+const toggleRepost = async () => {
   if (!user.value) {
-    Swal.fire('Thông báo', 'Vui lòng đăng nhập để chia sẻ!', 'info')
+    Swal.fire({ title: 'Vui lòng đăng nhập', background: '#181818', color: '#fff', icon: 'info' })
     return
   }
+
+  const reposts = post.value.reposts || []
+  const userIdx = reposts.indexOf(user.value.id)
+
+  if (userIdx > -1) {
+    reposts.splice(userIdx, 1)
+  } else {
+    reposts.push(user.value.id)
+  }
+
+  try {
+    await api.patch(`/posts/${post.value.id}`, { reposts })
+    post.value.reposts = reposts
+  } catch (error) {}
+}
+
+const sharePost = async () => {
+  if (!user.value) return
+
+  const shares = post.value.shares || []
+  if (!shares.includes(user.value.id)) {
+    shares.push(user.value.id)
+    try {
+      await api.patch(`/posts/${post.value.id}`, { shares })
+      post.value.shares = shares
+    } catch (e) {}
+  }
+
   shareModalRef.value.open()
 }
 
@@ -272,12 +255,10 @@ const comment = ref('')
 const isSending = ref(false)
 
 const userInitials = computed(() => {
-  if (!user || !user.name) return 'U'
-  const names = user.name.split(' ')
-  if (names.length >= 2) {
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-  }
-  return user.name[0].toUpperCase()
+  if (!user.value || !user.value.name) return 'U'
+  const names = user.value.name.split(' ')
+  if (names.length >= 2) return (names[0][0] + names[names.length - 1][0]).toUpperCase()
+  return user.value.name[0].toUpperCase()
 })
 
 const wordCount = computed(() => {
@@ -295,9 +276,7 @@ const readingTime = computed(() => {
 const getInitials = (name) => {
   if (!name) return '?'
   const names = name.split(' ')
-  if (names.length >= 2) {
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-  }
+  if (names.length >= 2) return (names[0][0] + names[names.length - 1][0]).toUpperCase()
   return name[0].toUpperCase()
 }
 
@@ -305,28 +284,17 @@ const formatDate = (date) => {
   if (!date) return ''
   const d = new Date(date)
   const now = new Date()
-  const diff = now - d
+  const diff = Math.floor((now - d) / 1000)
   
-  if (diff < 0 && diff > -60000) return 'Vừa xong'
+  if (diff < 60) return 'Vừa xong'
+  const m = Math.floor(diff / 60)
+  if (m < 60) return `${m} phút`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} giờ`
+  const dCount = Math.floor(h / 24)
+  if (dCount < 7) return `${dCount} ngày`
   
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  
-  if (days === 0) {
-    if (minutes < 1) return 'Vừa xong'
-    if (minutes < 60) return `${minutes} phút trước`
-    return `${hours} giờ trước`
-  }
-  if (days === 1) return 'Hôm qua'
-  if (days < 7) return `${days} ngày trước`
-  
-  return d.toLocaleDateString('vi-VN', { 
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  return d.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' })
 }
 
 const loadData = async () => {
@@ -339,16 +307,18 @@ const loadData = async () => {
         const uRes = await api.get(`/users/${postData.userId}`)
         postData.user = uRes.data
       }
-    } catch (e) {
-      console.error('Không tải được thông tin người dùng cho bài viết:', e)
-    }
+    } catch (e) {}
     
     post.value = postData
 
     const c = await api.get(`/comments?postId=${id}`)
-    comments.value = c.data.reverse() // Mới nhất lên trước
-  } catch (error) {
-    console.error('Lỗi khi tải dữ liệu:', error)
+    comments.value = c.data // Giữ nguyên thứ tự để hiển thị bài viết từ trên xuống dưới
+  } catch (error) {}
+}
+
+const focusComment = () => {
+  if (commentInput.value) {
+    commentInput.value.focus()
   }
 }
 
@@ -368,8 +338,6 @@ const addComment = async () => {
     comment.value = ''
     await loadData()
   } catch (error) {
-    console.error('Lỗi khi gửi bình luận:', error)
-    Swal.fire('Lỗi', 'Gửi bình luận thất bại!', 'error')
   } finally {
     isSending.value = false
   }
@@ -377,19 +345,3 @@ const addComment = async () => {
 
 onMounted(loadData)
 </script>
-
-<style scoped>
-.avatar-sm {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-</style>

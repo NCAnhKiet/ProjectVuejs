@@ -92,6 +92,11 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a class="nav-link border-0 py-3 fw-semibold" :class="{ active: activeTab === 'reposts' }" href="#" @click.prevent="activeTab = 'reposts'">
+                  <i class="bi bi-arrow-repeat me-1"></i> Đăng lại
+                </a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link border-0 py-3 fw-semibold" :class="{ active: activeTab === 'about' }" href="#" @click.prevent="activeTab = 'about'">
                   <i class="bi bi-info-circle me-1"></i> Giới thiệu
                 </a>
@@ -135,6 +140,41 @@
                       </router-link>
                       <button v-if="isOwnProfile" class="btn btn-sm btn-outline-danger border-0 rounded-circle" @click="deleteMyPost(p.id)">
                         <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reposts Tab -->
+          <div v-if="activeTab === 'reposts'" class="tab-pane fade show active">
+            <div v-if="loadingPosts" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </div>
+            <div v-else-if="myReposts.length === 0" class="card shadow-sm border-0 rounded-4 py-5 text-center">
+              <div class="text-muted fs-1 mb-2"><i class="bi bi-arrow-repeat"></i></div>
+              <p class="text-muted">Chưa có bài viết nào được đăng lại.</p>
+            </div>
+            <div v-else class="row g-4">
+              <div v-for="p in myReposts" :key="p.id" class="col-md-6">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden post-card-mini">
+                  <div v-if="p.image" class="post-img-container">
+                    <img :src="p.image" class="card-img-top" alt="post">
+                  </div>
+                  <div class="card-body">
+                    <div class="text-success small mb-1 fw-bold"><i class="bi bi-arrow-repeat me-1"></i>Đã đăng lại</div>
+                    <h5 class="card-title fw-bold mb-1 text-truncate">{{ p.title }}</h5>
+                    <p class="text-muted small mb-3">
+                      <i class="bi bi-person me-1"></i>{{ p.author }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                      <router-link :to="`/post/${p.id}`" class="btn btn-sm btn-primary rounded-pill px-3">
+                        Xem bài viết
+                      </router-link>
+                      <button v-if="isOwnProfile" class="btn btn-sm btn-outline-danger border-0 rounded-circle" @click="undoRepost(p)">
+                        <i class="bi bi-x-circle"></i>
                       </button>
                     </div>
                   </div>
@@ -300,6 +340,7 @@ const showPassword = ref(false)
 const oldPassword = ref('')
 const isUpdating = ref(false)
 const myPosts = ref([])
+const myReposts = ref([])
 const loadingPosts = ref(false)
 const followerCount = ref(0)
 const friendCount = ref(0)
@@ -566,12 +607,27 @@ const updateProfile = async () => {
 const loadPosts = async (userId) => {
   loadingPosts.value = true
   try {
-    const res = await api.get(`/posts?userId=${userId}`)
-    myPosts.value = res.data.reverse()
+    const res = await api.get(`/posts`)
+    const allPosts = res.data.reverse()
+    myPosts.value = allPosts.filter(p => p.userId === userId)
+    myReposts.value = allPosts.filter(p => p.reposts && p.reposts.includes(userId))
   } catch (err) {
     console.log(err)
   } finally {
     loadingPosts.value = false
+  }
+}
+
+const undoRepost = async (post) => {
+  if (!user.value) return
+  const reposts = post.reposts || []
+  const idx = reposts.indexOf(user.value.id)
+  if (idx > -1) {
+    reposts.splice(idx, 1)
+    try {
+      await api.patch(`/posts/${post.id}`, { reposts })
+      myReposts.value = myReposts.value.filter(p => p.id !== post.id)
+    } catch(e){}
   }
 }
 
@@ -621,14 +677,14 @@ const deleteMyPost = async (id) => {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #2d2d2d;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 45px;
-  box-shadow: 0 4px 15px rgba(0,0,0,.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,.5);
   margin-top: -60px;
   position: relative;
   z-index: 2;
@@ -636,7 +692,8 @@ const deleteMyPost = async (id) => {
 
 .profile-cover {
   height: 160px;
-  background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+  background-color: #222;
+  border-bottom: 1px solid #333;
 }
 
 .nav-tabs .nav-link {

@@ -8,24 +8,24 @@
             <h5 class="fw-bold px-3 pt-2 pb-2 mb-0">Bạn bè</h5>
             <div class="list-group list-group-flush border-0">
               <button 
-                class="list-group-item list-group-item-action border-0 rounded-3 mb-1 d-flex justify-content-between align-items-center"
-                :class="{ 'active bg-primary bg-opacity-10 text-primary fw-bold': activeTab === 'friends' }"
+                class="list-group-item list-group-item-action border-0 rounded-3 mb-1 d-flex justify-content-between align-items-center bg-transparent text-light"
+                :class="{ 'active fw-bold': activeTab === 'friends' }"
                 @click="activeTab = 'friends'"
               >
                 <div><i class="bi bi-people-fill me-2"></i>Tất cả bạn bè</div>
                 <span v-if="friends.length > 0" class="badge bg-secondary rounded-pill">{{ friends.length }}</span>
               </button>
               <button 
-                class="list-group-item list-group-item-action border-0 rounded-3 mb-1 d-flex justify-content-between align-items-center"
-                :class="{ 'active bg-primary bg-opacity-10 text-primary fw-bold': activeTab === 'requests' }"
+                class="list-group-item list-group-item-action border-0 rounded-3 mb-1 d-flex justify-content-between align-items-center bg-transparent text-light"
+                :class="{ 'active fw-bold': activeTab === 'requests' }"
                 @click="activeTab = 'requests'"
               >
                 <div><i class="bi bi-person-lines-fill me-2"></i>Lời mời kết bạn</div>
                 <span v-if="friendRequests.length > 0" class="badge bg-danger rounded-pill">{{ friendRequests.length }}</span>
               </button>
               <button 
-                class="list-group-item list-group-item-action border-0 rounded-3 d-flex justify-content-between align-items-center"
-                :class="{ 'active bg-primary bg-opacity-10 text-primary fw-bold': activeTab === 'find' }"
+                class="list-group-item list-group-item-action border-0 rounded-3 d-flex justify-content-between align-items-center bg-transparent text-light"
+                :class="{ 'active fw-bold': activeTab === 'find' }"
                 @click="activeTab = 'find'"
               >
                 <div><i class="bi bi-search me-2"></i>Tìm kiếm bạn bè</div>
@@ -102,13 +102,13 @@
             <!-- Find Friends Tab -->
             <div v-if="activeTab === 'find'">
               <h4 class="fw-bold mb-4">Tìm kiếm bạn bè</h4>
-              <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden">
-                <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
-                <input v-model="searchQuery" type="text" class="form-control border-0 py-2 shadow-none" placeholder="Nhập tên hoặc email...">
+              <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden" style="border: 1px solid #333;">
+                <span class="input-group-text border-0 ps-4" style="background-color: #181818;"><i class="bi bi-search text-muted"></i></span>
+                <input v-model="searchQuery" type="text" class="form-control border-0 py-2 shadow-none" style="background-color: #181818; color: #f3f5f7;" placeholder="Nhập tên hoặc email...">
               </div>
               
               <div v-if="searchQuery && searchedUsers.length === 0" class="text-center py-5 text-muted">
-                <i class="bi bi-search display-1 mb-3 text-light"></i>
+                <i class="bi bi-search display-1 mb-3 text-secondary"></i>
                 <h5>Không tìm thấy kết quả nào.</h5>
               </div>
               <div v-else class="row g-3">
@@ -300,7 +300,7 @@ const displayUsers = computed(() => {
 .avatar-md {
   width: 70px;
   height: 70px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background-color: #2d2d2d;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -308,7 +308,7 @@ const displayUsers = computed(() => {
   font-weight: bold;
   color: white;
   font-size: 28px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 .user-card {
   transition: all 0.2s ease-in-out;
@@ -318,8 +318,8 @@ const displayUsers = computed(() => {
   box-shadow: 0 .5rem 1rem rgba(0,0,0,.1)!important;
 }
 .list-group-item.active {
-  background-color: rgba(13, 110, 253, 0.1) !important;
-  color: #0d6efd !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
   border-color: transparent;
 }
 .min-vh-50 {

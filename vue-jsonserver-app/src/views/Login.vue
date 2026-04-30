@@ -97,15 +97,6 @@
             </form>
           </div>
         </div>
-
-        <!-- Quick Info -->
-        <div class="card mt-3 bg-light border-0">
-          <div class="card-body text-center py-2">
-            <small class="text-muted">
-              <i class="bi bi-lightbulb me-1"></i>Demo: email@test.com / password123
-            </small>
-          </div>
-        </div>
       </div>
     </div>
   </div>

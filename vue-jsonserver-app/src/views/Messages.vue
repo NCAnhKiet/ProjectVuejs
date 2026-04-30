@@ -1,15 +1,15 @@
 <template>
-  <div class="container-fluid py-4" style="height: calc(100vh - 100px);">
+  <div class="container-fluid" style="height: calc(100vh - 60px);">
     <div class="row h-100 g-3">
       <!-- Sidebar: Conversations List -->
       <div class="col-md-4 col-lg-3 h-100">
-        <div class="card shadow-sm h-100 border-0 rounded-4 overflow-hidden">
-          <div class="card-header bg-white border-bottom p-3">
-            <h5 class="fw-bold mb-0">Tin nhắn</h5>
+        <div class="h-100 d-flex flex-column border-end border-secondary" style="border-right-color: #333 !important;">
+          <div class="p-3 border-bottom border-secondary" style="border-bottom-color: #333 !important;">
+            <h5 class="fw-bold mb-0 text-light">Tin nhắn</h5>
           </div>
-          <div class="list-group list-group-flush overflow-auto">
+          <div class="list-group list-group-flush overflow-auto flex-grow-1" style="background: transparent;">
             <div v-if="loading" class="text-center p-4">
-              <div class="spinner-border spinner-border-sm text-primary"></div>
+              <div class="spinner-border spinner-border-sm text-light"></div>
             </div>
             <div v-else-if="conversations.length === 0" class="p-4 text-center text-muted">
               <i class="bi bi-chat-dots fs-1 mb-2 d-block"></i>
@@ -18,7 +18,7 @@
             <button 
               v-for="conv in conversations" 
               :key="conv.otherId"
-              class="list-group-item list-group-item-action p-3 border-0"
+              class="list-group-item list-group-item-action p-3 border-0 bg-transparent text-light"
               :class="{'active-conv': activeChatId === String(conv.otherId)}"
               @click="selectConversation(conv.otherId)"
             >
@@ -51,10 +51,10 @@
 
       <!-- Main Chat Area -->
       <div class="col-md-8 col-lg-9 h-100">
-        <div class="card shadow-sm h-100 border-0 rounded-4 overflow-hidden d-flex flex-column">
+        <div class="h-100 d-flex flex-column">
           <template v-if="activeChatId">
             <!-- Chat Header -->
-            <div class="card-header bg-white border-bottom p-3 d-flex align-items-center">
+            <div class="p-3 border-bottom border-secondary d-flex align-items-center" style="border-bottom-color: #333 !important;">
               <div class="avatar-sm me-3">
                 {{ getUserInitials(activeChatId) }}
               </div>
@@ -70,14 +70,16 @@
             </div>
 
             <!-- Messages Body -->
-            <div class="card-body bg-light overflow-auto p-4 flex-grow-1" ref="messageBox">
+            <div class="overflow-auto p-4 flex-grow-1" ref="messageBox" style="background-color: transparent;">
               <div v-for="msg in messages" :key="msg.id" class="mb-3 d-flex" :class="String(msg.senderId) === String(user.id) ? 'justify-content-end' : 'justify-content-start'">
                 <div class="message-wrapper" :class="String(msg.senderId) === String(user.id) ? 'flex-row-reverse' : ''">
-                  <div class="message-bubble px-3 py-2 shadow-sm" 
+                  <div class="message-bubble px-3 py-2" 
                     :class="[
-                      msg.isUnsent ? 'bg-transparent border border-secondary border-opacity-25 text-muted fst-italic' : (String(msg.senderId) === String(user.id) ? 'bg-primary text-white' : 'bg-white text-dark'),
+                      msg.isUnsent ? 'bg-transparent border border-secondary border-opacity-25 text-muted fst-italic' : (String(msg.senderId) === String(user.id) ? 'bg-primary text-light' : 'bg-secondary text-light'),
                       String(msg.senderId) === String(user.id) ? 'sender' : 'receiver'
-                    ]">
+                    ]"
+                    style="border-radius: 18px;"
+                  >
                     
                     <template v-if="msg.isUnsent">
                       <div class="content-text opacity-75">
@@ -110,7 +112,7 @@
             </div>
 
             <!-- Chat Input -->
-            <div class="card-footer bg-white border-top p-3">
+            <div class="p-3 border-top border-secondary" style="border-top-color: #333 !important; background-color: transparent;">
               <div v-if="editingMessageId" class="small text-primary mb-2 d-flex justify-content-between">
                 <span><i class="bi bi-pencil-square me-1"></i> Đang chỉnh sửa tin nhắn...</span>
                 <button class="btn btn-link btn-sm p-0 text-muted" @click="cancelEdit">Hủy</button>
@@ -119,11 +121,12 @@
                 <input 
                   v-model="newMessage" 
                   type="text" 
-                  class="form-control rounded-pill bg-light border-0 px-4" 
+                  class="form-control rounded-pill border-0 px-4" 
+                  style="background-color: #222; color: #f3f5f7;"
                   :placeholder="editingMessageId ? 'Sửa tin nhắn...' : 'Nhập tin nhắn...'"
                   required
                 >
-                <button type="submit" class="btn btn-primary rounded-circle shadow-sm" :disabled="!newMessage.trim()">
+                <button type="submit" class="btn btn-primary rounded-circle" :disabled="!newMessage.trim()">
                   <i :class="editingMessageId ? 'bi bi-check-lg' : 'bi bi-send-fill'"></i>
                 </button>
               </form>
@@ -131,10 +134,10 @@
           </template>
 
           <div v-else class="h-100 d-flex flex-column align-items-center justify-content-center text-muted p-5">
-            <div class="bg-light rounded-circle p-4 mb-4">
-              <i class="bi bi-chat-dots-fill" style="font-size: 4rem; color: #dee2e6;"></i>
+            <div class="rounded-circle p-4 mb-4" style="background-color: #222;">
+              <i class="bi bi-chat-dots-fill" style="font-size: 4rem; color: #555;"></i>
             </div>
-            <h4>Bắt đầu trò chuyện</h4>
+            <h4 class="text-light">Bắt đầu trò chuyện</h4>
             <p class="text-center">Chọn một người bạn từ danh sách để bắt đầu trao đổi tin nhắn hoặc chia sẻ những nội dung thú vị.</p>
           </div>
         </div>
@@ -400,8 +403,8 @@ watch(() => [route.query.userId, route.query.u], ([newId, newU]) => {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #e9ecef;
-  color: #495057;
+  background: #2d2d2d;
+  color: #f3f5f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,8 +414,8 @@ watch(() => [route.query.userId, route.query.u], ([newId, newU]) => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #e9ecef;
-  color: #495057;
+  background: #2d2d2d;
+  color: #f3f5f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,8 +423,8 @@ watch(() => [route.query.userId, route.query.u], ([newId, newU]) => {
   font-size: 14px;
 }
 .active-conv {
-  background-color: #f0f7ff !important;
-  border-left: 4px solid #0d6efd !important;
+  background-color: #222 !important;
+  border-left: 4px solid #f3f5f7 !important;
 }
 .message-bubble {
   max-width: 75%;
