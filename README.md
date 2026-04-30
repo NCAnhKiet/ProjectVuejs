@@ -1,25 +1,28 @@
-# BlogVue - Mạng Xã Hội Mini với Vue 3 & JSON Server
+# BlogVue (Premium Dark Mode) - Mạng Xã Hội Mini với Vue 3 & JSON Server
 
-**BlogVue** là một ứng dụng web mô phỏng mạng xã hội và blog cá nhân, được xây dựng bằng **Vue.js 3** (Composition API) kết hợp với **Vite** và backend giả lập **JSON Server**. Dự án này cung cấp các tính năng cốt lõi của một mạng xã hội thực thụ như quản lý bài viết, kết bạn, nhắn tin thời gian thực và nhiều tương tác thú vị khác.
+**BlogVue** là một ứng dụng web mô phỏng mạng xã hội và blog cá nhân, được xây dựng bằng **Vue.js 3** (Composition API) kết hợp với **Vite** và backend giả lập **JSON Server**. Trải qua bản cập nhật lớn về UI/UX, dự án giờ đây sở hữu giao diện **Dark Minimalist (Giao diện tối)** cực kỳ chuyên nghiệp, mượt mà và sang trọng lấy cảm hứng từ ứng dụng **Threads**, hứa hẹn mang lại trải nghiệm thị giác "wow" cho người sử dụng.
 
 ## 🚀 Tính năng nổi bật
 
-- **Quản lý Tài khoản**: Đăng ký, đăng nhập và bảo mật thông tin người dùng với Pinia store.
-- **Quản lý Bài viết**: 
-  - Tạo, chỉnh sửa, xóa bài viết kèm theo hình ảnh (Base64/URL).
-  - Thích (Like) và Bình luận (Comment) trên bài viết của người khác.
-- **Hệ thống Bạn bè (Chuẩn Facebook)**:
-  - Gửi lời mời kết bạn, chấp nhận/từ chối lời mời.
-  - Trang quản lý bạn bè chuyên dụng: Xem danh sách bạn bè, hủy kết bạn, tìm kiếm người dùng mới.
-  - **Đặc quyền**: Chỉ những người đã kết bạn mới có thể chia sẻ bài viết cho nhau.
+- **Giao diện Premium Dark Mode**:
+  - Thiết kế tối giản, sang trọng với tông màu `#181818` chủ đạo.
+  - Các hiệu ứng hover, transition mượt mà, thiết kế chuẩn Responsive cho mọi thiết bị.
+  - Các nút bấm, thanh điều hướng và giao diện nhắn tin được trau chuốt tỉ mỉ.
+- **Quản lý Bài viết & Tương tác**: 
+  - Tạo, chỉnh sửa bài viết với bộ soạn thảo văn bản giàu tính năng (Quill Editor) kết hợp thêm Tags/Nhãn.
+  - **Thích (Like)**, **Chia sẻ (Share)** và **Đăng lại (Repost)** bài viết hiển thị số lượt thao tác cực kỳ sinh động.
+- **Khám phá & Tìm kiếm (Explore)**:
+  - Công cụ tìm kiếm bài viết thời gian thực: lọc bài viết nhanh chóng theo tiêu đề, nội dung, tác giả hoặc hashtag (`#tags`).
+- **Hệ thống Bạn bè (Chuẩn mạng xã hội)**:
+  - Gửi, chấp nhận/từ chối lời mời kết bạn.
+  - Đặc quyền: Chỉ những người đã kết bạn mới có thể nhắn tin và chia sẻ bài viết nội bộ cho nhau.
 - **Hệ thống Nhắn tin (Messenger Style)**:
-  - Nhắn tin 1-1 trực tiếp.
-  - Chia sẻ bài viết dưới dạng tin nhắn.
-  - **Thu hồi tin nhắn**: Cho phép thu hồi tin nhắn đã gửi. Tin nhắn thu hồi sẽ hiển thị dưới dạng viền xám in nghiêng ("Bạn đã thu hồi một tin nhắn") giống hệt Messenger.
+  - Nhắn tin 1-1 trực tiếp với giao diện bóng thoại hiện đại.
+  - Chia sẻ bài viết dưới dạng thẻ preview ngay trong tin nhắn.
+  - **Thu hồi tin nhắn**: Cho phép thu hồi tin nhắn đã gửi (hiển thị dưới dạng viền xám in nghiêng giống Messenger).
 - **Trang Cá Nhân (Profile)**:
-  - Theo dõi (Follow) người dùng khác.
-  - Thống kê lượng người theo dõi, bạn bè, tổng bài viết.
-  - Quản lý thông tin cá nhân và thay đổi mật khẩu.
+  - Quản lý thông tin cá nhân, tiểu sử, vị trí, ảnh đại diện.
+  - Quản lý bài viết đã đăng và các bài viết đã **Đăng lại (Repost)**.
 
 ## 🛠 Công nghệ sử dụng
 
